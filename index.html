@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analizzatore Community</title>
+    
+    <link rel="icon" href="favicon.ico">
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+
+    <style>
+        /*
+         * STILI PERSONALIZZATI
+         * Colori: Giallo (#eddc01) e Blu (#0146bc)
+        */
+        :root {
+            --brand-blue: #0146bc;
+            --brand-yellow: #eddc01;
+            --brand-dark-blue: #002b5c; /* Blu più scuro per testo e accenti */
+            /* I colori dei grafici sono ora hard-coded in JS per compatibilità SVG */
+            --brand-light-grey: #f4f7f6; /* Sfondo pagina */
+            --brand-text: #333333;
+            /* --- MODIFICA: Colore testo più chiaro --- */
+            --chart-text-grey: #909090; 
+        }
+
+        body {
+            font-family: 'Nunito Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background-color: var(--brand-light-grey);
+            color: var(--brand-text);
+        }
+
+        /* Stile Header */
+        .app-header {
+            background-color: var(--brand-blue);
+            border-bottom: 4px solid var(--brand-yellow);
+        }
+
+        /* Stile Bottoni Principali (Upload/Download) */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem 1.5rem; /* 12px 24px */
+            border-radius: 0.375rem; /* 6px */
+            font-weight: 700;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            border: 2px solid transparent;
+            /* Design flat */
+            box-shadow: none;
+        }
+
+        .btn-primary {
+            background-color: var(--brand-blue);
+            color: white;
+            border-color: var(--brand-blue);
+        }
+        .btn-primary:hover {
+            background-color: var(--brand-dark-blue);
+            border-color: var(--brand-dark-blue);
+            color: var(--brand-yellow);
+        }
+        .btn-primary:disabled {
+            background-color: #a0aec0; /* grigio */
+            cursor: not-allowed;
+        }
+
+        /* Bottoni Secondari (Download) */
+        .btn-secondary {
+            background-color: white;
+            color: var(--brand-blue);
+            border-color: var(--brand-blue);
+        }
+        .btn-secondary:hover {
+            background-color: var(--brand-blue);
+            color: white;
+        }
+        .btn-secondary:disabled {
+            background-color: #e2e8f0; /* grigio chiaro */
+            border-color: #cbd5e0;
+            color: #a0aec0;
+            cursor: not-allowed;
+        }
+
+        /* Stile Tabs */
+        .tab-button {
+            padding: 0.5rem 1.25rem; /* 8px 20px */
+            font-weight: 700;
+            border-radius: 9999px; /* pill */
+            transition: all 0.2s ease-in-out;
+            border: 2px solid transparent;
+            cursor: pointer;
+        }
+        .tab-button.active {
+            background-color: var(--brand-yellow);
+            color: var(--brand-dark-blue);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .tab-button:not(.active) {
+            background-color: #e2e8f0; /* grigio chiaro */
+            color: var(--brand-dark-blue);
+        }
+        .tab-button:not(.active):hover {
+            background-color: #cbd5e0; /* grigio medio */
+        }
+        
+        /* Stile per i grafici per compatibilità SVG */
+        .apexcharts-svg {
+            background-color: transparent !important; /* Fix per sfondi SVG */
+        }
+        
+        /* Nasconde l'input file originale */
+        input[type="file"].hidden-input {
+            width: 0.1px;
+            height: 0.1px;
+            opacity: 0;
+            overflow: hidden;
+            position: absolute;
+            z-index: -1;
+        }
+        
+        /* Animazione di fade-in per i contenuti */
+        .content-section {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .content-section.visible {
+            display: block;
+        }
+        
+        /* Stili Tabella Dati */
+        .data-table thead th {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="app-header py-5 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <h1 class="text-3xl font-bold text-white tracking-wide">
+                Analizzatore Report
+            </h1>
+            <p class="text-lg text-gray-200">Carica un file Excel per generare i grafici</p>
+        </div>
+    </header>
+
+    <main class="max-w-7xl mx-auto p-4 md:p-8 space-y-8">
+
+        <section class="bg-white rounded-lg shadow-lg p-6 md:p-8 border-t-4 border-brand-yellow">
+            <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
+                1. Carica il tuo file Excel
+            </h2>
+            
+            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                <label for="fileInput" id="uploadButtonLabel" class="btn btn-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0l-3 3m3-3l3 3M6.75 19.5a4.5 4.5 0 01-1.41-8.775 5.25 5.25 0 0110.33-2.33 4.5 4.5 0 01-1.41 8.775" />
+                    </svg>
+                    <span id="uploadButtonText">Seleziona file Excel</span>
+                </label>
+                
+                <input type="file" id="fileInput" accept=".xlsx, .xls" class="hidden-input">
+                
+                <span id="fileName" class="text-gray-600 font-medium italic">Nessun file selezionato.</span>
+            </div>
+
+            <div id="errorMessage" class="hidden mt-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
+                <p class="font-bold">Errore</p>
+                <p id="errorText">Si è verificato un problema.</p>
+            </div>
+        </section>
+
+        <section id="controls" class="content-section bg-white rounded-lg shadow-lg p-6 md:p-8">
+            <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
+                2. Seleziona la Pagina
+            </h2>
+            <div id="tabsContainer" class="flex flex-wrap gap-3">
+                </div>
+        </section>
+
+        <section id="chartsContainerWrapper" class="content-section bg-white rounded-lg shadow-lg p-6 md:p-8">
+            <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
+                3. Visualizza i Grafici
+            </h2>
+            
+            <div class="mb-6 max-w-md">
+                <label for="fontSizeSlider" class="block text-sm font-medium text-brand-dark-blue">
+                    Regola Dimensione Font: 
+                    <span id="fontSizeValue" class="font-bold text-brand-blue">20</span>px
+                </label>
+                <input type="range" id="fontSizeSlider" min="20" max="30" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-blue">
+            </div>
+
+            <div id="chartsContainer" class="space-y-10">
+                <div>
+                    <h3 id="bar-chart-title" class="text-xl font-semibold text-brand-dark-blue mb-3"></h3>
+                    <div class="w-full max-w-5xl mx-auto">
+                         <div id="chart-bar"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <h3 id="donut-chart-title" class="text-xl font-semibold text-brand-dark-blue mb-3"></h3>
+                    <div id="chart-donut" class="w-full max-w-lg mx-auto"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="tableContainerWrapper" class="content-section bg-white rounded-lg shadow-lg p-6 md:p-8">
+            <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-5 pb-3 border-b border-gray-200">
+                <h2 id="tableTitle" class="text-2xl font-bold text-brand-dark-blue">
+                    Dettaglio Argomenti
+                </h2>
+                <button id="copyTableButton" class="btn btn-secondary mt-3 sm:mt-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
+                    </svg>
+                    <span class="btn-text">Copia Tabella</span>
+                </button>
+            </div>
+            
+            <div class="overflow-y-auto max-h-[600px] border border-gray-200 rounded-lg">
+                <div id="tableContainer">
+                    </div>
+            </div>
+        </section>
+
+
+        <section id="downloadButtons" class="content-section bg-white rounded-lg shadow-lg p-6 md:p-8">
+             <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
+                4. Esporta Grafici
+            </h2>
+            <div class="flex flex-wrap gap-4">
+                <button id="downloadBarSVG" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    <span class="btn-text">Scarica Grafico a Barre (SVG)</span>
+                </button>
+                <button id="downloadDonutSVG" class="btn btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                    </svg>
+                    <span class="btn-text">Scarica Grafico ad Anello (SVG)</span>
+                </button>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            // --- Selettori DOM ---
+            const fileInput = document.getElementById('fileInput');
+            const fileName = document.getElementById('fileName');
+            const uploadButtonLabel = document.getElementById('uploadButtonLabel');
+            const uploadButtonText = document.getElementById('uploadButtonText');
+            
+            const controlsSection = document.getElementById('controls');
+            const tabsContainer = document.getElementById('tabsContainer');
+            
+            // Sezioni Contenuto
+            const chartsSection = document.getElementById('chartsContainerWrapper');
+            const downloadSection = document.getElementById('downloadButtons');
+            const tableSection = document.getElementById('tableContainerWrapper'); 
+            const tableContainer = document.getElementById('tableContainer'); 
+            const tableTitle = document.getElementById('tableTitle'); 
+            const copyTableButton = document.getElementById('copyTableButton'); 
+
+            // Selettori per i titoli HTML
+            const barChartTitle = document.getElementById('bar-chart-title');
+            const donutChartTitle = document.getElementById('donut-chart-title');
+            
+            // Bottoni Download
+            const downloadBarSVG = document.getElementById('downloadBarSVG');
+            const downloadDonutSVG = document.getElementById('downloadDonutSVG');
+            
+            // Errori
+            const errorMessage = document.getElementById('errorMessage');
+            const errorText = document.getElementById('errorText');
+
+            // --- Stato Applicazione ---
+            let workbook = null;
+            let charts = {
+                bar: null,
+                donut: null 
+            };
+            let currentSheetName = null; 
+            
+            const targetSheets = [
+                "Community Poste Italiane",
+                "Community Postepay",
+                "Community PosteMobile",
+                "Temi trattati Poste Italiane FB" 
+            ];
+            
+            // Colori hard-coded per compatibilità SVG e come da richiesta
+            const chartColors = {
+                user: '#c2d6fb',      // Azzurro/Grigio richiesto
+                moderator: '#0146bc', // Blu scuro (header)
+                text: '#909090',
+                title: '#002b5c' 
+            };
+
+            // --- Gestione Eventi ---
+
+            fileInput.addEventListener('change', handleFile);
+            downloadBarSVG.addEventListener('click', () => downloadSVG(charts.bar, 'grafico_barre.svg', downloadBarSVG));
+            downloadDonutSVG.addEventListener('click', () => downloadSVG(charts.donut, 'grafico_anello.svg', downloadDonutSVG));
+            copyTableButton.addEventListener('click', () => copyTableToClipboard('dataTable', copyTableButton)); 
+
+            // Event listener per lo slider del font
+            const fontSizeSlider = document.getElementById('fontSizeSlider');
+            const fontSizeValue = document.getElementById('fontSizeValue');
+
+            fontSizeSlider.addEventListener('input', (e) => {
+                const newSize = e.target.value;
+                fontSizeValue.textContent = newSize;
+                const sizePx = newSize + 'px';
+                const sizePxPlus2 = (parseInt(newSize, 10) + 2) + 'px';
+                const sizePxPlus4 = (parseInt(newSize, 10) + 4) + 'px';
+                const sizePxPlus8 = (parseInt(newSize, 10) + 8) + 'px';
+
+                if (charts.bar) {
+                    charts.bar.updateOptions({
+                        xaxis: { labels: { style: { fontSize: sizePx } } },
+                        yaxis: { labels: { style: { fontSize: sizePx } } },
+                        legend: { fontSize: sizePxPlus2 }
+                    });
+                }
+                if (charts.donut) {
+                    charts.donut.updateOptions({
+                        legend: { fontSize: sizePxPlus2 },
+                        plotOptions: {
+                            pie: {
+                                donut: {
+                                    labels: {
+                                        total: { fontSize: sizePxPlus4 },
+                                        value: { fontSize: sizePxPlus8 }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            });
+
+
+            // --- Funzioni Principali ---
+
+            async function handleFile(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                setButtonLoading(uploadButtonLabel, uploadButtonText, "Caricamento...");
+                fileName.textContent = file.name;
+                hideError();
+                resetUI();
+
+                try {
+                    const data = await file.arrayBuffer();
+                    workbook = XLSX.read(data, { type: 'array' });
+                    
+                    setButtonDone(uploadButtonLabel, uploadButtonText, "File Caricato!", "Seleziona file Excel");
+                    
+                    setupTabs(workbook);
+                    showSection(controlsSection);
+
+                } catch (err) {
+                    console.error("Errore durante la lettura del file:", err);
+                    showError("Impossibile leggere il file. Assicurati che sia un file Excel valido.");
+                    setButtonError(uploadButtonLabel, uploadButtonText, "Errore! Riprova", "Seleziona file Excel");
+                    fileName.textContent = "Nessun file selezionato.";
+                }
+            }
+            
+            function setupTabs(wb) {
+                tabsContainer.innerHTML = ''; 
+                let foundSheets = 0;
+
+                targetSheets.forEach(sheetName => {
+                    if (wb.SheetNames.includes(sheetName)) {
+                        foundSheets++;
+                        const tabButton = document.createElement('button');
+                        tabButton.className = 'tab-button';
+                        tabButton.textContent = sheetName;
+                        
+                        // Logica per mostrare grafici O tabella
+                        tabButton.addEventListener('click', () => {
+                            tabsContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
+                            tabButton.classList.add('active');
+                            
+                            currentSheetName = sheetName; 
+
+                            if (sheetName.startsWith("Community")) {
+                                showSection(chartsSection);
+                                showSection(downloadSection);
+                                hideSection(tableSection); // Nasconde la tabella
+                                processSheet(wb.Sheets[sheetName], sheetName);
+                            } else if (sheetName.startsWith("Temi trattati")) {
+                                hideSection(chartsSection);
+                                hideSection(downloadSection);
+                                showSection(tableSection); // Mostra la tabella
+                                processTableSheet(wb.Sheets[sheetName], sheetName);
+                            }
+                        });
+                        
+                        tabsContainer.appendChild(tabButton);
+                    }
+                });
+
+                if (foundSheets === 0) {
+                    showError(`Nessuno dei fogli richiesti (es. "${targetSheets[0]}") è stato trovato nel file.`);
+                } else {
+                    tabsContainer.querySelector('.tab-button')?.click();
+                }
+            }
+
+
+            function processSheet(ws, sheetName) {
+                const json = XLSX.utils.sheet_to_json(ws, { 
+                    range: "A15:E45", 
+                    header: ["A", "B", "C", "D", "E"],
+                    cellDates: true 
+                });
+
+                let categories = [];
+                let seriesUser = [];
+                let seriesModerator = [];
+                let totalUser = 0;
+                let totalModerator = 0;
+                
+                for (let i = 0; i < json.length; i++) {
+                    const row = json[i];
+                    const dateValue = row['A']; 
+                    
+                    if (!dateValue) {
+                        break; 
+                    }
+
+                    let jsDate;
+                    if (dateValue instanceof Date) {
+                        jsDate = dateValue;
+                    } else if (typeof dateValue === 'string') {
+                        jsDate = new Date(dateValue); 
+                    } else if (typeof dateValue === 'number') {
+                        // Converte il numero seriale di Excel
+                        const excelEpoch = new Date(1899, 11, 30);
+                        jsDate = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+                    }
+
+                    if (!jsDate || isNaN(jsDate.getTime())) {
+                        console.warn("Riga saltata a causa di data non valida:", dateValue);
+                        continue; 
+                    }
+                    
+                    const formattedDate = jsDate.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
+                    
+                    const incoming = parseInt(row['D'], 10) || 0; 
+                    const outgoing = parseInt(row['E'], 10) || 0; 
+
+                    categories.push(formattedDate);
+                    seriesUser.push(incoming);
+                    seriesModerator.push(outgoing);
+                    
+                    totalUser += incoming;
+                    totalModerator += outgoing;
+                }
+                
+                const barSeries = [
+                    { name: 'Attività Utenti', data: seriesUser },
+                    { name: 'Attività Moderatori', data: seriesModerator }
+                ];
+                
+                const initialFontSize = document.getElementById('fontSizeSlider').value;
+
+                barChartTitle.textContent = `Volumi Giornalieri: ${sheetName}`;
+                charts.bar = createBarChart('chart-bar', barSeries, categories, initialFontSize);
+
+                const donutSeries = [totalUser, totalModerator];
+                const donutLabels = ['Attività Utenti', 'Attività Moderatori'];
+                
+                donutChartTitle.textContent = `Distribuzione Totale: ${sheetName}`;
+                charts.donut = createDonutChart('chart-donut', donutSeries, donutLabels, initialFontSize);
+            }
+            
+            // Funzione per processare la tabella Argomenti
+            function processTableSheet(ws, sheetName) {
+                // Legge i dati da A15 in giù
+                const json = XLSX.utils.sheet_to_json(ws, { 
+                    range: "A15:B50", // Range ampio per sicurezza
+                    header: ["Argomento", "Valore"],
+                });
+
+                tableTitle.textContent = `Dettaglio Argomenti: ${sheetName}`;
+
+                let tableHtml = `<table id="dataTable" class="data-table w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-100 border-b-2 border-brand-blue">
+                                            <th class="p-3 text-sm font-bold text-brand-dark-blue uppercase">Argomento</th>
+                                            <th class="p-3 text-sm font-bold text-brand-dark-blue uppercase text-right">Valore</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>`;
+                
+                let total = 0;
+                json.forEach(row => {
+                    const argomento = row['Argomento'];
+                    const valore = parseInt(row['Valore'], 10) || 0;
+                    if (argomento && valore > 0) { // Salta righe vuote o con valore 0
+                        tableHtml += `<tr class="border-b border-gray-200 hover:bg-gray-50">
+                                        <td class="p-3">${argomento}</td>
+                                        <td class="p-3 text-right font-medium">${valore.toLocaleString('it-IT')}</td>
+                                      </tr>`;
+                        total += valore;
+                    }
+                });
+
+                // Riga Totale
+                tableHtml += `<tr class="bg-gray-200 border-t-2 border-brand-dark-blue">
+                                <td class="p-3 font-bold text-brand-dark-blue">TOTALE</td>
+                                <td class="p-3 text-right font-bold text-brand-dark-blue">${total.toLocaleString('it-IT')}</td>
+                              </tr>`;
+
+                tableHtml += `</tbody></table>`;
+                tableContainer.innerHTML = tableHtml;
+            }
+
+            function resetUI() {
+                hideSection(controlsSection);
+                hideSection(chartsSection);
+                hideSection(downloadSection);
+                hideSection(tableSection); 
+                
+                if (charts.bar) charts.bar.destroy();
+                if (charts.donut) charts.donut.destroy();
+                charts.bar = null;
+                charts.donut = null;
+                
+                tabsContainer.innerHTML = '';
+                tableContainer.innerHTML = ''; 
+                currentSheetName = null;
+            }
+
+            // Funzione kFormatter aggiornata per gestire `,0`
+            function kFormatter(value) {
+                const num = parseFloat(value);
+                if (isNaN(num)) return value; // Gestione sicurezza
+
+                if (num >= 1000) {
+                    let kNum = num / 1000;
+                    // Formatta con max 1 decimale, usa virgola (es. 1,5k o 1k)
+                    return kNum.toLocaleString('it-IT', { maximumFractionDigits: 1 }) + 'k';
+                }
+                // Formatta come intero (es. 950)
+                return num.toLocaleString('it-IT', { maximumFractionDigits: 0 }); 
+            }
+
+
+            // --- Funzioni di Creazione Grafici ---
+
+            function createBarChart(elementId, series, categories, fontSize) {
+                if (charts.bar) charts.bar.destroy();
+                document.getElementById(elementId).innerHTML = '';
+                const options = getBarChartOptions(series, categories, fontSize);
+                const chart = new ApexCharts(document.getElementById(elementId), options);
+                chart.render();
+                return chart;
+            }
+
+            function createDonutChart(elementId, series, labels, fontSize) {
+                if (charts.donut) charts.donut.destroy();
+                document.getElementById(elementId).innerHTML = '';
+                const options = getDonutChartOptions(series, labels, fontSize);
+                const chart = new ApexCharts(document.getElementById(elementId), options);
+                chart.render();
+                return chart;
+            }
+
+            function getBarChartOptions(series, categories, fontSize) {
+                const size = parseInt(fontSize, 10);
+                
+                return {
+                    series: series,
+                    chart: {
+                        type: 'bar',
+                        height: 450,
+                        width: '100%', 
+                        stacked: true, 
+                        toolbar: { show: false },
+                        fontFamily: 'Nunito Sans, sans-serif'
+                    },
+                    colors: [chartColors.user, chartColors.moderator],
+                    plotOptions: {
+                        bar: {
+                            horizontal: false,
+                            columnWidth: '90%', 
+                        }
+                    },
+                    dataLabels: {
+                        enabled: false 
+                    },
+                    xaxis: {
+                        categories: categories,
+                        labels: {
+                            style: {
+                                colors: chartColors.text,
+                                fontSize: size + 'px', 
+                                fontWeight: 600
+                            },
+                            offsetY: 10 
+                        },
+                        tickAmount: Math.floor(categories.length / 3) 
+                    },
+                    yaxis: {
+                         labels: {
+                            style: {
+                                colors: chartColors.text,
+                                fontSize: size + 'px', 
+                                fontWeight: 600
+                            },
+                            formatter: kFormatter
+                         },
+                        axisBorder: {
+                            show: false // Nasconde la linea dell'asse
+                        },
+                        axisTicks: {
+                            show: false // Nasconde i tick
+                        }
+                    },
+                    legend: {
+                        show: true, 
+                        position: 'bottom', // La legenda (didascalia) è in basso
+                        fontSize: (size + 2) + 'px', 
+                        labels: { colors: chartColors.text },
+                        fontFamily: 'Nunito Sans, sans-serif'
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: kFormatter
+                        }
+                    },
+                    // --- 🧩 SOLUZIONE: Eliminare colonna fantasma ---
+                    grid: {
+                        borderColor: '#e0e0e0',
+                        strokeDashArray: 4,
+                        xaxis: {
+                            lines: {
+                                show: false // Nasconde linee verticali
+                            }
+                        },
+                        padding: {
+                            left: 0, // Forzato a 0 come da richiesta
+                            right: 0 // Forzato a 0 come da richiesta
+                        }
+                    }
+                    // --- FINE SOLUZIONE ---
+                };
+            }
+            
+            function getDonutChartOptions(series, labels, fontSize) {
+                const size = parseInt(fontSize, 10);
+
+                return {
+                    series: series,
+                    labels: labels,
+                    chart: {
+                        type: 'donut',
+                        height: 450, 
+                        toolbar: { show: false },
+                        fontFamily: 'Nunito Sans, sans-serif'
+                    },
+                    colors: [chartColors.user, chartColors.moderator],
+                    dataLabels: {
+                        enabled: false
+                    },
+                    plotOptions: {
+                        pie: {
+                            donut: {
+                                size: '70%',
+                                labels: {
+                                    show: true,
+                                    total: { 
+                                        show: true,
+                                        showAlways: true,
+                                        label: 'Commenti',
+                                        fontSize: (size + 4) + 'px', 
+                                        fontWeight: 'bold',
+                                        color: chartColors.moderator, 
+                                        
+                                        formatter: function (w) {
+                                            const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
+                                            return kFormatter(total); 
+                                        }
+                                    },
+                                    value: { 
+                                        show: true,
+                                        fontSize: (size + 8) + 'px',
+                                        fontWeight: 'bold',
+                                        color: chartColors.moderator,
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    legend: {
+                        show: true,
+                        position: 'bottom', // La legenda (didascalia) è in basso
+                        horizontalAlign: 'center',
+                        fontSize: (size + 2) + 'px', 
+                        fontWeight: 600,  
+                        labels: { colors: chartColors.text },
+                        fontFamily: 'Nunito Sans, sans-serif',
+                        itemMargin: {
+                            horizontal: 10,
+                            vertical: 5
+                        },
+                        formatter: function(seriesName, opts) {
+                            const value = opts.w.globals.series[opts.seriesIndex];
+                            const total = opts.w.globals.series.reduce((a, b) => a + b, 0);
+                            
+                            let percentNum = (total > 0) ? (value / total * 100) : 0;
+                            const percentVal = percentNum.toLocaleString('it-IT', { maximumFractionDigits: 1 });
+                            
+                            const formattedValue = kFormatter(value);
+                            
+                            return `${seriesName}: ${formattedValue} (${percentVal}%)`;
+                        }
+                    },
+                    tooltip: {
+                        y: {
+                            formatter: kFormatter
+                        }
+                    }
+                };
+            }
+
+
+            // --- Funzioni di Utility (Download, Errori, UI) ---
+            
+            // =================================================================
+            // --- 🚀 NUOVA FUNZIONE DI DOWNLOAD (Problema 2 Risolto) ---
+            // =================================================================
+            async function downloadSVG(chart, filename, buttonEl) {
+                if (!chart) {
+                    showError("Nessun grafico da scaricare.");
+                    return;
+                }
+                
+                const btnTextEl = buttonEl.querySelector('.btn-text');
+                const originalText = btnTextEl.textContent;
+                setButtonLoading(buttonEl, btnTextEl, "Elaborazione...");
+
+                try {
+                    // 1. Assicura che il grafico sia renderizzato completamente
+                    await new Promise(resolve => setTimeout(resolve, 200));
+
+                    // 2. Trova gli elementi SVG e HTML (Legenda)
+                    const mainSvgEl = chart.w.globals.dom.baseEl.querySelector('svg');
+                    const legendEl = chart.w.globals.dom.baseEl.querySelector('.apexcharts-legend');
+                    
+                    if (!mainSvgEl) {
+                        throw new Error("Elemento SVG principale non trovato.");
+                    }
+
+                    // 3. Clona l'SVG principale e imposta lo sfondo trasparente
+                    const mainSvgClone = mainSvgEl.cloneNode(true);
+                    mainSvgClone.style.backgroundColor = 'transparent';
+
+                    // 4. Ottieni dimensioni
+                    const mainSvgWidth = parseFloat(mainSvgEl.getAttribute('width'));
+                    const mainSvgHeight = parseFloat(mainSvgEl.getAttribute('height'));
+                    
+                    let legendHeight = 0;
+                    let legendHtml = '';
+                    let combinedHeight = mainSvgHeight;
+
+                    // 5. Prepara la legenda (se esiste)
+                    if (legendEl) {
+                        // Clona la legenda per applicare stili inline necessari per l'esportazione
+                        const legendClone = legendEl.cloneNode(true);
+                        legendClone.style.fontFamily = "'Nunito Sans', sans-serif";
+                        legendClone.style.position = 'static'; // Rimuove posizionamento assoluto
+                        legendClone.style.marginTop = '10px';  // Aggiunge spazio
+                        legendClone.style.textAlign = 'center';
+                        legendClone.style.width = '100%';
+
+                        // Serializza l'HTML della legenda
+                        legendHtml = new XMLSerializer().serializeToString(legendClone);
+                        // Calcola l'altezza necessaria
+                        legendHeight = legendEl.offsetHeight + 20; // Aggiunge padding
+                        combinedHeight += legendHeight;
+                    }
+
+                    // 6. Combina Grafico e Legenda in un unico SVG
+                    //    Usiamo <foreignObject> per incorporare l'HTML della legenda
+                    const combinedSvgString = `
+<svg width="${mainSvgWidth}" height="${combinedHeight}" viewBox="0 0 ${mainSvgWidth} ${combinedHeight}" 
+     xmlns="http://www.w3.org/2000/svg" 
+     xmlns:xlink="http://www.w3.org/1999/xlink" 
+     style="font-family: 'Nunito Sans', sans-serif; background-color: white;">
+    
+    <g>
+        ${mainSvgClone.innerHTML}
+    </g>
+    
+    ${legendHtml ? `
+    <foreignObject x="0" y="${mainSvgHeight}" width="100%" height="${legendHeight}">
+        <body xmlns="http://www.w3.org/1999/xhtml">
+            <div style="font-family: 'Nunito Sans', sans-serif; color: #909090; width: 100%;">
+                ${legendHtml}
+            </div>
+        </body>
+    </foreignObject>
+    ` : ''}
+</svg>`;
+
+                    // 7. Crea il Blob e avvia il download
+                    const svgBlob = new Blob([combinedSvgString], { type: 'image/svg+xml;charset=utf-8' });
+                    const url = URL.createObjectURL(svgBlob);
+                    
+                    const link = document.createElement('a');
+                    link.href = url;
+                    const safeSheetName = (currentSheetName || 'grafico').replace(/ /g, '_');
+                    link.download = `${safeSheetName}_${filename}`;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+                    
+                    setButtonDone(buttonEl, btnTextEl, "Fatto!", originalText);
+
+                } catch (err) {
+                    console.error("Errore durante l'esportazione SVG:", err);
+                    showError("Impossibile generare l'SVG. " + err.message);
+                    setButtonError(buttonEl, btnTextEl, "Errore", originalText);
+                }
+            }
+            // =================================================================
+            // --- FINE NUOVA FUNZIONE DI DOWNLOAD ---
+            // =================================================================
+
+            
+            // Funzione Copia Tabella
+            function copyTableToClipboard(tableId, buttonEl) {
+                const table = document.getElementById(tableId);
+                if (!table) return;
+                
+                const btnTextEl = buttonEl.querySelector('.btn-text');
+                const originalText = btnTextEl.textContent;
+                setButtonLoading(buttonEl, btnTextEl, "Copia in corso...");
+
+                let tsv = '';
+                // Itera sulle righe della tabella
+                for (const row of table.rows) {
+                    const cells = Array.from(row.cells).map(cell => cell.innerText);
+                    tsv += cells.join('\t') + '\n'; // Usa TAB come separatore
+                }
+
+                // Crea un textarea temporaneo per copiare
+                const textArea = document.createElement('textarea');
+                textArea.value = tsv;
+                textArea.style.position = 'absolute';
+                textArea.style.left = '-9999px';
+                document.body.appendChild(textArea);
+                
+                textArea.select();
+                try {
+                    // Usa document.execCommand per compatibilità (navigator.clipboard non funziona in tutti i contesti)
+                    document.execCommand('copy');
+                    setButtonDone(buttonEl, btnTextEl, "Copiato!", originalText);
+                } catch (err) {
+                    console.error("Errore durante la copia:", err);
+                    setButtonError(buttonEl, btnTextEl, "Errore", originalText);
+                }
+
+                document.body.removeChild(textArea);
+            }
+
+
+            // --- Utility UI ---
+
+            function showError(message) {
+                errorText.innerHTML = message;
+                errorMessage.classList.remove('hidden');
+            }
+
+            function hideError() {
+                errorMessage.classList.add('hidden');
+                errorText.innerHTML = "";
+            }
+
+            function showSection(el) {
+                el.classList.add('visible');
+            }
+            
+            function hideSection(el) {
+                el.classList.remove('visible');
+            }
+
+            function setButtonLoading(btnEl, textEl, loadingText) {
+                textEl.textContent = loadingText;
+                btnEl.disabled = true;
+            }
+            
+            function setButtonDone(btnEl, textEl, doneText, originalText) {
+                textEl.textContent = doneText;
+                btnEl.disabled = false;
+                setTimeout(() => {
+                    textEl.textContent = originalText;
+                }, 2000); 
+            }
+            
+            function setButtonError(btnEl, textEl, errorText, originalText) {
+                textEl.textContent = errorText;
+                btnEl.disabled = false;
+                setTimeout(() => {
+                    textEl.textContent = originalText;
+                }, 3000);
+            }
+
+        });
+    </script>
+
+</body>
+</html>
