@@ -218,7 +218,7 @@
                 </div>
                 
                 <div>
-                    <h3 id="donut-chart-title" class="text-xl font-semibold text-brand-dark-blue mb-3 text-center"></h3>
+                    <h3 id="donut-chart-title" class="text-xl font-semibold text-brand-dark-blue mb-1 text-center"></h3>
                     <div class="mx-auto" style="width: 100%; max-width: 450px;">
                          <div id="chart-donut-wrapper">
                              <div id="chart-donut"></div>
@@ -663,23 +663,21 @@
                     labels: labels,
                     chart: {
                         type: 'donut',
-                        height: 400,
+                        height: 320, /* MODIFICA: Ridotto da 380 */
                         fontFamily: 'Nunito Sans, sans-serif'
                     },
                     // Ordine colori: [Utenti, Moderatori]
                     colors: [chartColors.user, chartColors.moderator], 
                     
-                    // MODIFICA #1: Togli le percentuali dal grafico
                     dataLabels: {
                         enabled: false
                     },
                     
-                    // MODIFICHE #2, #3, #4: Legenda
                     legend: {
                         show: true,
                         position: 'top', 
                         horizontalAlign: 'center',
-                        offsetY: 25, // MODIFICA: Sposta la legenda in basso
+                        offsetY: 5, /* MODIFICA: Ridotto da 15 */
                         fontSize: '20px', 
                         fontWeight: 700, 
                         labels: {
@@ -695,33 +693,25 @@
                             horizontal: 15,
                             vertical: 5
                         },
-                        // MODIFICA #2: Aggiungi percentuali alla legenda
                         formatter: function (seriesName, opts) {
-                            // Calcola percentuale
                             const percent = (series[opts.seriesIndex] / total * 100).toFixed(0);
-                            
-                            // Colore grigio (testo secondario)
-                            const grayColor = '#333333'; // Colore percentuale scurito
-                            
-                            // Ritorna HTML per styling differenziato
+                            const grayColor = '#333333';
                             return `${seriesName} <span style="font-weight: 400; color: ${grayColor}; margin-left: 6px;">${percent}%</span>`;
                         }
                     },
                     
-                    // Opzioni specifiche per la torta/donut
                     plotOptions: {
                         pie: {
-                            offsetY: 50, // MODIFICA: Spinge il grafico in basso
+                            offsetY: 20, /* MODIFICA: Ridotto da 40 */
                             donut: {
-                                size: '65%', // Dimensione del buco
+                                size: '65%', 
                                 labels: {
-                                    show: false // Nascondiamo il "Total" centrale
+                                    show: false 
                                 }
                             }
                         }
                     },
                     
-                    // Tooltip al passaggio del mouse
                     tooltip: {
                         y: {
                             formatter: kFormatter, 
@@ -734,7 +724,6 @@
                         fillSeriesColor: true 
                     },
 
-                    // Rimuove l'ombreggiatura al passaggio del mouse
                     states: {
                         hover: {
                             filter: {
