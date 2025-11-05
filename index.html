@@ -15,6 +15,8 @@
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 
     <style>
         /*
@@ -29,7 +31,8 @@
             --brand-light-grey: #f4f7f6; /* Sfondo pagina */
             --brand-text: #333333;
             /* --- MODIFICA: Colore testo più chiaro --- */
-            --chart-text-grey: #909090; 
+            /* 1) MODIFICA: Colore testo schiarito */
+            --chart-text-grey: #B0B0B0; 
         }
 
         body {
@@ -203,26 +206,26 @@
                 3. Visualizza i Grafici
             </h2>
             
-            <div class="mb-6 max-w-md">
-                <label for="fontSizeSlider" class="block text-sm font-medium text-brand-dark-blue">
-                    Regola Dimensione Font: 
-                    <span id="fontSizeValue" class="font-bold text-brand-blue">20</span>px
-                </label>
-                <input type="range" id="fontSizeSlider" min="20" max="30" value="20" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-brand-blue">
-            </div>
-
-            <div id="chartsContainer" class="space-y-10">
+            <div id="chartsContainer" class="space-y-16">
+                
                 <div>
-                    <h3 id="bar-chart-title" class="text-xl font-semibold text-brand-dark-blue mb-3"></h3>
-                    <div class="w-full max-w-5xl mx-auto">
-                         <div id="chart-bar"></div>
+                    <h3 id="bar-chart-title" class="text-xl font-semibold text-brand-dark-blue mb-3 text-center"></h3>
+                    <div class="mx-auto" style="width: 90%; max-width: 800px;">
+                         <div id="chart-bar-wrapper">
+                             <div id="chart-bar"></div>
+                         </div>
                     </div>
                 </div>
                 
                 <div>
-                    <h3 id="donut-chart-title" class="text-xl font-semibold text-brand-dark-blue mb-3"></h3>
-                    <div id="chart-donut" class="w-full max-w-lg mx-auto"></div>
+                    <h3 id="donut-chart-title" class="text-xl font-semibold text-brand-dark-blue mb-3 text-center"></h3>
+                    <div class="mx-auto" style="width: 100%; max-width: 450px;">
+                         <div id="chart-donut-wrapper">
+                             <div id="chart-donut"></div>
+                         </div>
+                    </div>
                 </div>
+                
             </div>
         </section>
 
@@ -251,18 +254,20 @@
                 4. Esporta Grafici
             </h2>
             <div class="flex flex-wrap gap-4">
-                <button id="downloadBarSVG" class="btn btn-secondary">
+                <button id="downloadBarBtn" class="btn btn-secondary">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                     </svg>
-                    <span class="btn-text">Scarica Grafico a Barre (SVG)</span>
+                    <span class="btn-text">Scarica Grafico a Barre (PNG)</span>
                 </button>
-                <button id="downloadDonutSVG" class="btn btn-secondary">
+                
+                <button id="downloadDonutBtn" class="btn btn-secondary">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
-                         <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
                     </svg>
-                    <span class="btn-text">Scarica Grafico ad Anello (SVG)</span>
+                    <span class="btn-text">Scarica Grafico a Torta (PNG)</span>
                 </button>
+                
             </div>
         </section>
 
@@ -292,9 +297,9 @@
             const barChartTitle = document.getElementById('bar-chart-title');
             const donutChartTitle = document.getElementById('donut-chart-title');
             
-            // Bottoni Download
-            const downloadBarSVG = document.getElementById('downloadBarSVG');
-            const downloadDonutSVG = document.getElementById('downloadDonutSVG');
+            // 3. SELETTORI BOTTONI MODIFICATI
+            const downloadBarBtn = document.getElementById('downloadBarBtn');
+            const downloadDonutBtn = document.getElementById('downloadDonutBtn');
             
             // Errori
             const errorMessage = document.getElementById('errorMessage');
@@ -317,55 +322,24 @@
             
             // Colori hard-coded per compatibilità SVG e come da richiesta
             const chartColors = {
-                user: '#c2d6fb',      // Azzurro/Grigio richiesto
-                moderator: '#0146bc', // Blu scuro (header)
-                text: '#909090',
+                user: '#c2d6fb',      // Azzurro/Grigio richiesto (Utenti)
+                moderator: '#0146bc', // Blu scuro (Moderatori)
+                /* 1) MODIFICA: Colore testo schiarito */
+                text: '#B0B0B0',
                 title: '#002b5c' 
             };
 
             // --- Gestione Eventi ---
 
             fileInput.addEventListener('change', handleFile);
-            downloadBarSVG.addEventListener('click', () => downloadSVG(charts.bar, 'grafico_barre.svg', downloadBarSVG));
-            downloadDonutSVG.addEventListener('click', () => downloadSVG(charts.donut, 'grafico_anello.svg', downloadDonutSVG));
+            
+            // 3. LISTENER EVENTI MODIFICATI
+            downloadBarBtn.addEventListener('click', () => downloadPNG('chart-bar-wrapper', 'grafico_barre.png', downloadBarBtn));
+            downloadDonutBtn.addEventListener('click', () => downloadPNG('chart-donut-wrapper', 'grafico_torta.png', downloadDonutBtn));
+            
             copyTableButton.addEventListener('click', () => copyTableToClipboard('dataTable', copyTableButton)); 
 
-            // Event listener per lo slider del font
-            const fontSizeSlider = document.getElementById('fontSizeSlider');
-            const fontSizeValue = document.getElementById('fontSizeValue');
-
-            fontSizeSlider.addEventListener('input', (e) => {
-                const newSize = e.target.value;
-                fontSizeValue.textContent = newSize;
-                const sizePx = newSize + 'px';
-                const sizePxPlus2 = (parseInt(newSize, 10) + 2) + 'px';
-                const sizePxPlus4 = (parseInt(newSize, 10) + 4) + 'px';
-                const sizePxPlus8 = (parseInt(newSize, 10) + 8) + 'px';
-
-                if (charts.bar) {
-                    charts.bar.updateOptions({
-                        xaxis: { labels: { style: { fontSize: sizePx } } },
-                        yaxis: { labels: { style: { fontSize: sizePx } } },
-                        legend: { fontSize: sizePxPlus2 }
-                    });
-                }
-                if (charts.donut) {
-                    charts.donut.updateOptions({
-                        legend: { fontSize: sizePxPlus2 },
-                        plotOptions: {
-                            pie: {
-                                donut: {
-                                    labels: {
-                                        total: { fontSize: sizePxPlus4 },
-                                        value: { fontSize: sizePxPlus8 }
-                                    }
-                                }
-                            }
-                        }
-                    });
-                }
-            });
-
+            // 1) ELIMINATO: Event listener per lo slider del font
 
             // --- Funzioni Principali ---
 
@@ -388,7 +362,7 @@
                     showSection(controlsSection);
 
                 } catch (err) {
-                    console.error("Errore durante la lettura del file:", err);
+                    console.error("Errore during la lettura del file:", err);
                     showError("Impossibile leggere il file. Assicurati che sia un file Excel valido.");
                     setButtonError(uploadButtonLabel, uploadButtonText, "Errore! Riprova", "Seleziona file Excel");
                     fileName.textContent = "Nessun file selezionato.";
@@ -488,21 +462,23 @@
                     totalModerator += outgoing;
                 }
                 
+                // --- Creazione Grafico a Barre ---
                 const barSeries = [
                     { name: 'Attività Utenti', data: seriesUser },
                     { name: 'Attività Moderatori', data: seriesModerator }
                 ];
                 
-                const initialFontSize = document.getElementById('fontSizeSlider').value;
-
                 barChartTitle.textContent = `Volumi Giornalieri: ${sheetName}`;
-                charts.bar = createBarChart('chart-bar', barSeries, categories, initialFontSize);
-
-                const donutSeries = [totalUser, totalModerator];
-                const donutLabels = ['Attività Utenti', 'Attività Moderatori'];
+                charts.bar = createBarChart('chart-bar', barSeries, categories);
                 
-                donutChartTitle.textContent = `Distribuzione Totale: ${sheetName}`;
-                charts.donut = createDonutChart('chart-donut', donutSeries, donutLabels, initialFontSize);
+                // --- Creazione Grafico Donut ---
+                const donutSeries = [totalUser, totalModerator];
+                // L'ordine delle etichette deve corrispondere ai colori (Utenti=user, Moderatori=moderator)
+                const donutLabels = ['Utenti', 'Moderatori Poste']; 
+                
+                donutChartTitle.textContent = `Riepilogo Totale: ${sheetName}`;
+                charts.donut = createDonutChart('chart-donut', donutSeries, donutLabels);
+
             }
             
             // Funzione per processare la tabella Argomenti
@@ -554,9 +530,9 @@
                 hideSection(tableSection); 
                 
                 if (charts.bar) charts.bar.destroy();
-                if (charts.donut) charts.donut.destroy();
+                if (charts.donut) charts.donut.destroy(); 
                 charts.bar = null;
-                charts.donut = null;
+                charts.donut = null; 
                 
                 tabsContainer.innerHTML = '';
                 tableContainer.innerHTML = ''; 
@@ -580,32 +556,30 @@
 
             // --- Funzioni di Creazione Grafici ---
 
-            function createBarChart(elementId, series, categories, fontSize) {
+            function createBarChart(elementId, series, categories) {
                 if (charts.bar) charts.bar.destroy();
                 document.getElementById(elementId).innerHTML = '';
-                const options = getBarChartOptions(series, categories, fontSize);
+                const options = getBarChartOptions(series, categories);
                 const chart = new ApexCharts(document.getElementById(elementId), options);
                 chart.render();
                 return chart;
             }
-
-            function createDonutChart(elementId, series, labels, fontSize) {
+            
+            function createDonutChart(elementId, series, labels) {
                 if (charts.donut) charts.donut.destroy();
                 document.getElementById(elementId).innerHTML = '';
-                const options = getDonutChartOptions(series, labels, fontSize);
+                const options = getDonutChartOptions(series, labels);
                 const chart = new ApexCharts(document.getElementById(elementId), options);
                 chart.render();
                 return chart;
             }
 
-            function getBarChartOptions(series, categories, fontSize) {
-                const size = parseInt(fontSize, 10);
-                
+            function getBarChartOptions(series, categories) {
                 return {
                     series: series,
                     chart: {
                         type: 'bar',
-                        height: 450,
+                        height: 470,
                         width: '100%', 
                         stacked: true, 
                         toolbar: { show: false },
@@ -626,243 +600,193 @@
                         labels: {
                             style: {
                                 colors: chartColors.text,
-                                fontSize: size + 'px', 
+                                fontSize: '30px', 
                                 fontWeight: 600
                             },
-                            offsetY: 10 
+                            offsetY: 15,
+                            rotate: -45,
+                            rotateAlways: true
                         },
-                        tickAmount: Math.floor(categories.length / 3) 
+                        tickAmount: categories.length > 5 ? Math.floor(categories.length / 3) : undefined,
+                        tickPlacement: 'on'
                     },
                     yaxis: {
                          labels: {
                             style: {
                                 colors: chartColors.text,
-                                fontSize: size + 'px', 
+                                fontSize: '30px', 
                                 fontWeight: 600
                             },
-                            formatter: kFormatter
+                            formatter: kFormatter,
+                            offsetX: -15
                          },
                         axisBorder: {
-                            show: false // Nasconde la linea dell'asse
+                            show: false
                         },
                         axisTicks: {
-                            show: false // Nasconde i tick
-                        }
+                            show: false
+                        },
+                        tickAmount: 5
                     },
                     legend: {
-                        show: true, 
-                        position: 'bottom', // La legenda (didascalia) è in basso
-                        fontSize: (size + 2) + 'px', 
-                        labels: { colors: chartColors.text },
-                        fontFamily: 'Nunito Sans, sans-serif'
+                        show: false
                     },
                     tooltip: {
                         y: {
                             formatter: kFormatter
                         }
                     },
-                    // --- 🧩 SOLUZIONE: Eliminare colonna fantasma ---
                     grid: {
-                        borderColor: '#e0e0e0',
-                        strokeDashArray: 4,
+                        borderColor: '#cccccc',
+                        strokeDashArray: 0,
                         xaxis: {
                             lines: {
-                                show: false // Nasconde linee verticali
+                                show: false
                             }
                         },
                         padding: {
-                            left: 0, // Forzato a 0 come da richiesta
-                            right: 0 // Forzato a 0 come da richiesta
+                            left: 0,
+                            right: 0
                         }
                     }
-                    // --- FINE SOLUZIONE ---
                 };
             }
             
-            function getDonutChartOptions(series, labels, fontSize) {
-                const size = parseInt(fontSize, 10);
-
+            // --- MODIFICA: Funzione getDonutChartOptions aggiornata ---
+            function getDonutChartOptions(series, labels) {
+                
+                // Calcola il totale per il formatter della legenda
+                const total = series.reduce((a, b) => a + b, 0);
+                
                 return {
                     series: series,
                     labels: labels,
                     chart: {
                         type: 'donut',
-                        height: 450, 
-                        toolbar: { show: false },
+                        height: 400,
                         fontFamily: 'Nunito Sans, sans-serif'
                     },
-                    colors: [chartColors.user, chartColors.moderator],
+                    // Ordine colori: [Utenti, Moderatori]
+                    colors: [chartColors.user, chartColors.moderator], 
+                    
+                    // MODIFICA #1: Togli le percentuali dal grafico
                     dataLabels: {
                         enabled: false
                     },
+                    
+                    // MODIFICHE #2, #3, #4: Legenda
+                    legend: {
+                        show: true,
+                        position: 'top', 
+                        horizontalAlign: 'center',
+                        fontSize: '20px', // MODIFICA #3: Aumenta font
+                        fontWeight: 700, // Grassetto per il nome della serie
+                        labels: {
+                            colors: chartColors.title // Colore blu scuro per il nome serie
+                        },
+                        markers: {
+                            width: 18, // MODIFICA #4: Aumenta dimensione pallino
+                            height: 18, // MODIFICA #4: Aumenta dimensione pallino
+                            radius: 3, 
+                            offsetY: 4 // MODIFICA #4: Allinea pallino verticalmente
+                        },
+                        itemMargin: {
+                            horizontal: 15,
+                            vertical: 5
+                        },
+                        // MODIFICA #2: Aggiungi percentuali alla legenda
+                        formatter: function (seriesName, opts) {
+                            // Calcola percentuale
+                            const percent = (series[opts.seriesIndex] / total * 100).toFixed(0);
+                            
+                            // Colore grigio (testo secondario)
+                            const grayColor = chartColors.text; // '#B0B0B0'
+                            
+                            // Ritorna HTML per styling differenziato
+                            // seriesName eredita fontWeight: 700 e labels.colors (blu scuro)
+                            // La percentuale ha stile custom (normale, grigio)
+                            return `${seriesName} <span style="font-weight: 400; color: ${grayColor}; margin-left: 6px;">${percent}%</span>`;
+                        }
+                    },
+                    
+                    // Opzioni specifiche per la torta/donut
                     plotOptions: {
                         pie: {
                             donut: {
-                                size: '70%',
+                                size: '65%', // Dimensione del buco
                                 labels: {
-                                    show: true,
-                                    total: { 
-                                        show: true,
-                                        showAlways: true,
-                                        label: 'Commenti',
-                                        fontSize: (size + 4) + 'px', 
-                                        fontWeight: 'bold',
-                                        color: chartColors.moderator, 
-                                        
-                                        formatter: function (w) {
-                                            const total = w.globals.seriesTotals.reduce((a, b) => a + b, 0);
-                                            return kFormatter(total); 
-                                        }
-                                    },
-                                    value: { 
-                                        show: true,
-                                        fontSize: (size + 8) + 'px',
-                                        fontWeight: 'bold',
-                                        color: chartColors.moderator,
-                                    }
+                                    show: false // Nascondiamo il "Total" centrale
                                 }
                             }
+                            // Blocco dataLabels rimosso per togliere % dalle fette
                         }
                     },
-                    legend: {
-                        show: true,
-                        position: 'bottom', // La legenda (didascalia) è in basso
-                        horizontalAlign: 'center',
-                        fontSize: (size + 2) + 'px', 
-                        fontWeight: 600,  
-                        labels: { colors: chartColors.text },
-                        fontFamily: 'Nunito Sans, sans-serif',
-                        itemMargin: {
-                            horizontal: 10,
-                            vertical: 5
-                        },
-                        formatter: function(seriesName, opts) {
-                            const value = opts.w.globals.series[opts.seriesIndex];
-                            const total = opts.w.globals.series.reduce((a, b) => a + b, 0);
-                            
-                            let percentNum = (total > 0) ? (value / total * 100) : 0;
-                            const percentVal = percentNum.toLocaleString('it-IT', { maximumFractionDigits: 1 });
-                            
-                            const formattedValue = kFormatter(value);
-                            
-                            return `${seriesName}: ${formattedValue} (${percentVal}%)`;
-                        }
-                    },
+                    
+                    // Tooltip al passaggio del mouse
                     tooltip: {
                         y: {
-                            formatter: kFormatter
+                            formatter: kFormatter, // Mostra il valore assoluto (es. 1.2k)
+                            title: {
+                                formatter: function (seriesName) {
+                                    return seriesName + ':';
+                                }
+                            }
+                        },
+                        fillSeriesColor: true // Il tooltip prende il colore della fetta
+                    },
+
+                    // Rimuove l'ombreggiatura al passaggio del mouse
+                    states: {
+                        hover: {
+                            filter: {
+                                type: 'none'
+                            }
                         }
                     }
                 };
             }
 
-
-            // --- Funzioni di Utility (Download, Errori, UI) ---
-            
-            // =================================================================
-            // --- 🚀 NUOVA FUNZIONE DI DOWNLOAD (Problema 2 Risolto) ---
-            // =================================================================
-            async function downloadSVG(chart, filename, buttonEl) {
-                if (!chart) {
-                    showError("Nessun grafico da scaricare.");
+            async function downloadPNG(elementIdToCapture, filename, buttonEl) {
+                const elementToCapture = document.getElementById(elementIdToCapture);
+                if (!elementToCapture) {
+                    showError("Elemento del grafico non trovato: #" + elementIdToCapture);
                     return;
                 }
                 
                 const btnTextEl = buttonEl.querySelector('.btn-text');
                 const originalText = btnTextEl.textContent;
-                setButtonLoading(buttonEl, btnTextEl, "Elaborazione...");
+                setButtonLoading(buttonEl, btnTextEl, "Generazione PNG...");
 
                 try {
-                    // 1. Assicura che il grafico sia renderizzato completamente
-                    await new Promise(resolve => setTimeout(resolve, 200));
+                    await new Promise(resolve => setTimeout(resolve, 300));
 
-                    // 2. Trova gli elementi SVG e HTML (Legenda)
-                    const mainSvgEl = chart.w.globals.dom.baseEl.querySelector('svg');
-                    const legendEl = chart.w.globals.dom.baseEl.querySelector('.apexcharts-legend');
-                    
-                    if (!mainSvgEl) {
-                        throw new Error("Elemento SVG principale non trovato.");
-                    }
+                    const canvas = await html2canvas(elementToCapture, {
+                        scale: 2,
+                        useCORS: true,
+                        backgroundColor: '#ffffff',
+                        logging: false
+                    });
 
-                    // 3. Clona l'SVG principale e imposta lo sfondo trasparente
-                    const mainSvgClone = mainSvgEl.cloneNode(true);
-                    mainSvgClone.style.backgroundColor = 'transparent';
-
-                    // 4. Ottieni dimensioni
-                    const mainSvgWidth = parseFloat(mainSvgEl.getAttribute('width'));
-                    const mainSvgHeight = parseFloat(mainSvgEl.getAttribute('height'));
-                    
-                    let legendHeight = 0;
-                    let legendHtml = '';
-                    let combinedHeight = mainSvgHeight;
-
-                    // 5. Prepara la legenda (se esiste)
-                    if (legendEl) {
-                        // Clona la legenda per applicare stili inline necessari per l'esportazione
-                        const legendClone = legendEl.cloneNode(true);
-                        legendClone.style.fontFamily = "'Nunito Sans', sans-serif";
-                        legendClone.style.position = 'static'; // Rimuove posizionamento assoluto
-                        legendClone.style.marginTop = '10px';  // Aggiunge spazio
-                        legendClone.style.textAlign = 'center';
-                        legendClone.style.width = '100%';
-
-                        // Serializza l'HTML della legenda
-                        legendHtml = new XMLSerializer().serializeToString(legendClone);
-                        // Calcola l'altezza necessaria
-                        legendHeight = legendEl.offsetHeight + 20; // Aggiunge padding
-                        combinedHeight += legendHeight;
-                    }
-
-                    // 6. Combina Grafico e Legenda in un unico SVG
-                    //    Usiamo <foreignObject> per incorporare l'HTML della legenda
-                    const combinedSvgString = `
-<svg width="${mainSvgWidth}" height="${combinedHeight}" viewBox="0 0 ${mainSvgWidth} ${combinedHeight}" 
-     xmlns="http://www.w3.org/2000/svg" 
-     xmlns:xlink="http://www.w3.org/1999/xlink" 
-     style="font-family: 'Nunito Sans', sans-serif; background-color: white;">
-    
-    <g>
-        ${mainSvgClone.innerHTML}
-    </g>
-    
-    ${legendHtml ? `
-    <foreignObject x="0" y="${mainSvgHeight}" width="100%" height="${legendHeight}">
-        <body xmlns="http://www.w3.org/1999/xhtml">
-            <div style="font-family: 'Nunito Sans', sans-serif; color: #909090; width: 100%;">
-                ${legendHtml}
-            </div>
-        </body>
-    </foreignObject>
-    ` : ''}
-</svg>`;
-
-                    // 7. Crea il Blob e avvia il download
-                    const svgBlob = new Blob([combinedSvgString], { type: 'image/svg+xml;charset=utf-8' });
-                    const url = URL.createObjectURL(svgBlob);
-                    
+                    const dataUrl = canvas.toDataURL('image/png');
                     const link = document.createElement('a');
-                    link.href = url;
+                    link.href = dataUrl;
+                    
                     const safeSheetName = (currentSheetName || 'grafico').replace(/ /g, '_');
                     link.download = `${safeSheetName}_${filename}`;
+                    
                     document.body.appendChild(link);
                     link.click();
                     document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
                     
                     setButtonDone(buttonEl, btnTextEl, "Fatto!", originalText);
 
                 } catch (err) {
-                    console.error("Errore durante l'esportazione SVG:", err);
-                    showError("Impossibile generare l'SVG. " + err.message);
+                    console.error("Errore during l'esportazione PNG:", err);
+                    showError("Impossibile generare il PNG. " + err.message);
                     setButtonError(buttonEl, btnTextEl, "Errore", originalText);
                 }
             }
-            // =================================================================
-            // --- FINE NUOVA FUNZIONE DI DOWNLOAD ---
-            // =================================================================
-
             
-            // Funzione Copia Tabella
             function copyTableToClipboard(tableId, buttonEl) {
                 const table = document.getElementById(tableId);
                 if (!table) return;
@@ -872,13 +796,11 @@
                 setButtonLoading(buttonEl, btnTextEl, "Copia in corso...");
 
                 let tsv = '';
-                // Itera sulle righe della tabella
                 for (const row of table.rows) {
                     const cells = Array.from(row.cells).map(cell => cell.innerText);
-                    tsv += cells.join('\t') + '\n'; // Usa TAB come separatore
+                    tsv += cells.join('\t') + '\n';
                 }
 
-                // Crea un textarea temporaneo per copiare
                 const textArea = document.createElement('textarea');
                 textArea.value = tsv;
                 textArea.style.position = 'absolute';
@@ -887,19 +809,15 @@
                 
                 textArea.select();
                 try {
-                    // Usa document.execCommand per compatibilità (navigator.clipboard non funziona in tutti i contesti)
                     document.execCommand('copy');
                     setButtonDone(buttonEl, btnTextEl, "Copiato!", originalText);
                 } catch (err) {
-                    console.error("Errore durante la copia:", err);
+                    console.error("Errore during la copia:", err);
                     setButtonError(buttonEl, btnTextEl, "Errore", originalText);
                 }
 
                 document.body.removeChild(textArea);
             }
-
-
-            // --- Utility UI ---
 
             function showError(message) {
                 errorText.innerHTML = message;
