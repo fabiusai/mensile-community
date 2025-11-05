@@ -31,8 +31,8 @@
             --brand-light-grey: #f4f7f6; /* Sfondo pagina */
             --brand-text: #333333;
             /* --- MODIFICA: Colore testo più chiaro --- */
-            /* 1) MODIFICA: Colore testo schiarito */
-            --chart-text-grey: #B0B0B0; 
+            /* 1) MODIFICA: Colore testo scurito */
+            --chart-text-grey: #666666; /* Era #B0B0B0 */
         }
 
         body {
@@ -324,8 +324,8 @@
             const chartColors = {
                 user: '#c2d6fb',      // Azzurro/Grigio richiesto (Utenti)
                 moderator: '#0146bc', // Blu scuro (Moderatori)
-                /* 1) MODIFICA: Colore testo schiarito */
-                text: '#B0B0B0',
+                /* 1) MODIFICA: Colore testo scurito */
+                text: '#666666',      // Era #B0B0B0
                 title: '#002b5c' 
             };
 
@@ -599,9 +599,9 @@
                         categories: categories,
                         labels: {
                             style: {
-                                colors: chartColors.text,
+                                colors: chartColors.text, /* MODIFICA: Usa colore scurito */
                                 fontSize: '30px', 
-                                fontWeight: 600
+                                fontWeight: 400
                             },
                             offsetY: 15,
                             rotate: -45,
@@ -613,9 +613,9 @@
                     yaxis: {
                          labels: {
                             style: {
-                                colors: chartColors.text,
+                                colors: chartColors.text, /* MODIFICA: Usa colore scurito */
                                 fontSize: '30px', 
-                                fontWeight: 600
+                                fontWeight: 400
                             },
                             formatter: kFormatter,
                             offsetX: -15
@@ -679,16 +679,17 @@
                         show: true,
                         position: 'top', 
                         horizontalAlign: 'center',
-                        fontSize: '20px', // MODIFICA #3: Aumenta font
-                        fontWeight: 700, // Grassetto per il nome della serie
+                        offsetY: 25, // MODIFICA: Sposta la legenda in basso
+                        fontSize: '20px', 
+                        fontWeight: 700, 
                         labels: {
-                            colors: chartColors.title // Colore blu scuro per il nome serie
+                            colors: chartColors.title 
                         },
                         markers: {
-                            width: 18, // MODIFICA #4: Aumenta dimensione pallino
-                            height: 18, // MODIFICA #4: Aumenta dimensione pallino
+                            width: 18, 
+                            height: 18, 
                             radius: 3, 
-                            offsetY: 4 // MODIFICA #4: Allinea pallino verticalmente
+                            offsetY: 8 
                         },
                         itemMargin: {
                             horizontal: 15,
@@ -700,11 +701,9 @@
                             const percent = (series[opts.seriesIndex] / total * 100).toFixed(0);
                             
                             // Colore grigio (testo secondario)
-                            const grayColor = chartColors.text; // '#B0B0B0'
+                            const grayColor = '#333333'; // Colore percentuale scurito
                             
                             // Ritorna HTML per styling differenziato
-                            // seriesName eredita fontWeight: 700 e labels.colors (blu scuro)
-                            // La percentuale ha stile custom (normale, grigio)
                             return `${seriesName} <span style="font-weight: 400; color: ${grayColor}; margin-left: 6px;">${percent}%</span>`;
                         }
                     },
@@ -712,27 +711,27 @@
                     // Opzioni specifiche per la torta/donut
                     plotOptions: {
                         pie: {
+                            offsetY: 50, // MODIFICA: Spinge il grafico in basso
                             donut: {
                                 size: '65%', // Dimensione del buco
                                 labels: {
                                     show: false // Nascondiamo il "Total" centrale
                                 }
                             }
-                            // Blocco dataLabels rimosso per togliere % dalle fette
                         }
                     },
                     
                     // Tooltip al passaggio del mouse
                     tooltip: {
                         y: {
-                            formatter: kFormatter, // Mostra il valore assoluto (es. 1.2k)
+                            formatter: kFormatter, 
                             title: {
                                 formatter: function (seriesName) {
                                     return seriesName + ':';
                                 }
                             }
                         },
-                        fillSeriesColor: true // Il tooltip prende il colore della fetta
+                        fillSeriesColor: true 
                     },
 
                     // Rimuove l'ombreggiatura al passaggio del mouse
