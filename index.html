@@ -193,6 +193,62 @@
             </div>
         </section>
 
+        <section id="summarySection" class="content-section bg-white rounded-lg shadow-lg p-6 md:p-8">
+            <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
+                Commenti Complessivi (Attività Utenti)
+            </h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Poste Italiane</h4>
+                    <div class="flex items-center justify-center gap-2 mt-1">
+                        <p id="summaryPI" class="text-3xl font-bold text-brand-dark-blue">-</p>
+                        <button id="copySummaryPI" title="Copia valore" class="copy-summary-btn text-gray-400 hover:text-brand-blue transition-colors duration-150 p-1 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Postepay</h4>
+                    <div class="flex items-center justify-center gap-2 mt-1">
+                        <p id="summaryPP" class="text-3xl font-bold text-brand-dark-blue">-</p>
+                        <button id="copySummaryPP" title="Copia valore" class="copy-summary-btn text-gray-400 hover:text-brand-blue transition-colors duration-150 p-1 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">PosteMobile</h4>
+                    <div class="flex items-center justify-center gap-2 mt-1">
+                        <p id="summaryPM" class="text-3xl font-bold text-brand-dark-blue">-</p>
+                        <button id="copySummaryPM" title="Copia valore" class="copy-summary-btn text-gray-400 hover:text-brand-blue transition-colors duration-150 p-1 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="bg-brand-yellow p-4 rounded-lg">
+                    <h4 class="text-sm font-bold text-brand-dark-blue uppercase tracking-wider">TOTALE</h4>
+                    <div class="flex items-center justify-center gap-2 mt-1">
+                        <p id="summaryOverall" class="text-3xl font-bold text-brand-dark-blue">-</p>
+                        <button id="copySummaryOverall" title="Copia valore" class="copy-summary-btn text-brand-dark-blue hover:text-brand-blue/70 transition-colors duration-150 p-1 rounded-full">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                
+            </div>
+        </section>
         <section id="controls" class="content-section bg-white rounded-lg shadow-lg p-6 md:p-8">
             <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
                 2. Seleziona la Pagina
@@ -305,6 +361,14 @@
             const errorMessage = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
 
+            // --- INIZIO MODIFICA 1: Aggiunti selettori per Summary ---
+            const summarySection = document.getElementById('summarySection');
+            const summaryPI = document.getElementById('summaryPI');
+            const summaryPP = document.getElementById('summaryPP');
+            const summaryPM = document.getElementById('summaryPM');
+            const summaryOverall = document.getElementById('summaryOverall');
+            // --- FINE MODIFICA 1 ---
+
             // --- Stato Applicazione ---
             let workbook = null;
             let charts = {
@@ -343,6 +407,13 @@
 
             // 1) ELIMINATO: Event listener per lo slider del font
 
+            // --- INIZIO MODIFICA (JS) 1: Listener per icone copia summary ---
+            document.getElementById('copySummaryPI').addEventListener('click', (e) => copySummaryValue('summaryPI', e.currentTarget));
+            document.getElementById('copySummaryPP').addEventListener('click', (e) => copySummaryValue('summaryPP', e.currentTarget));
+            document.getElementById('copySummaryPM').addEventListener('click', (e) => copySummaryValue('summaryPM', e.currentTarget));
+            document.getElementById('copySummaryOverall').addEventListener('click', (e) => copySummaryValue('summaryOverall', e.currentTarget));
+            // --- FINE MODIFICA (JS) 1 ---
+
             // --- Funzioni Principali ---
 
             async function handleFile(event) {
@@ -359,6 +430,10 @@
                     workbook = XLSX.read(data, { type: 'array' });
                     
                     setButtonDone(uploadButtonLabel, uploadButtonText, "File Caricato!", "Seleziona file Excel");
+                    
+                    // --- INIZIO MODIFICA 2: Chiamata alla funzione Summary ---
+                    calculateAndDisplaySummary(workbook);
+                    // --- FINE MODIFICA 2 ---
                     
                     setupTabs(workbook);
                     showSection(controlsSection);
@@ -525,11 +600,91 @@
                 tableContainer.innerHTML = tableHtml;
             }
 
+            // --- INIZIO MODIFICA 3: Aggiunte funzioni per Summary ---
+            function calculateSheetTotal(ws) {
+                // Usa la stessa logica di processSheet per estrarre i dati
+                const json = XLSX.utils.sheet_to_json(ws, { 
+                    range: "A15:E45", 
+                    header: ["A", "B", "C", "D", "E"],
+                    cellDates: true 
+                });
+
+                let totalUser = 0;
+                
+                for (let i = 0; i < json.length; i++) {
+                    const row = json[i];
+                    const dateValue = row['A']; 
+                    
+                    // Stessa logica di stop di processSheet
+                    if (!dateValue) {
+                        break; 
+                    }
+                    
+                    // Controllo validità data (necessario per saltare righe non valide)
+                    let jsDate;
+                    if (dateValue instanceof Date) {
+                        jsDate = dateValue;
+                    } else if (typeof dateValue === 'string') {
+                        jsDate = new Date(dateValue); 
+                    } else if (typeof dateValue === 'number') {
+                        // Converte il numero seriale di Excel
+                        const excelEpoch = new Date(1899, 11, 30);
+                        jsDate = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
+                    }
+
+                    if (!jsDate || isNaN(jsDate.getTime())) {
+                        continue; 
+                    }
+
+                    // Somma solo la colonna 'D' (Attività Utenti)
+                    totalUser += (parseInt(row['D'], 10) || 0);
+                }
+                return totalUser;
+            }
+
+            function calculateAndDisplaySummary(wb) {
+                const summarySheets = {
+                    "Community Poste Italiane": 0,
+                    "Community Postepay": 0,
+                    "Community PosteMobile": 0
+                };
+
+                let overallTotal = 0;
+
+                // Calcola i totali per i fogli specifici
+                for (const sheetName in summarySheets) {
+                    if (wb.SheetNames.includes(sheetName)) {
+                        const total = calculateSheetTotal(wb.Sheets[sheetName]);
+                        summarySheets[sheetName] = total;
+                        overallTotal += total;
+                    }
+                }
+                
+                // Popola i campi HTML usando la kFormatter esistente
+                summaryPI.textContent = kFormatter(summarySheets["Community Poste Italiane"]);
+                summaryPP.textContent = kFormatter(summarySheets["Community Postepay"]);
+                summaryPM.textContent = kFormatter(summarySheets["Community PosteMobile"]);
+                summaryOverall.textContent = kFormatter(overallTotal);
+                
+                // Mostra la sezione
+                showSection(summarySection);
+            }
+            // --- FINE MODIFICA 3 ---
+
             function resetUI() {
+                // --- INIZIO MODIFICA 4: Reset UI per Summary ---
                 hideSection(controlsSection);
                 hideSection(chartsSection);
                 hideSection(downloadSection);
                 hideSection(tableSection); 
+                hideSection(summarySection); // Aggiunto
+                
+                // Reset testi summary
+                summaryPI.textContent = '-';
+                summaryPP.textContent = '-';
+                summaryPM.textContent = '-';
+                summaryOverall.textContent = '-';
+                // --- FINE MODIFICA 4 ---
                 
                 if (charts.bar) charts.bar.destroy();
                 if (charts.donut) charts.donut.destroy(); 
@@ -542,6 +697,7 @@
             }
 
             // Funzione kFormatter aggiornata per gestire `,0`
+            // QUESTA FUNZIONE SODDISFA GIA' I REQUISITI (es. 1,5k e 2k)
             function kFormatter(value) {
                 const num = parseFloat(value);
                 if (isNaN(num)) return value; // Gestione sicurezza
@@ -806,6 +962,43 @@
                 }
             }
             
+            // --- INIZIO MODIFICA (JS) 2: Funzione per copiare valore summary ---
+            async function copySummaryValue(elementId, buttonEl) {
+                const element = document.getElementById(elementId);
+                if (!element) return;
+                
+                const valueToCopy = element.textContent;
+                if (valueToCopy === '-') return; // Non copiare il placeholder
+
+                // Salva l'icona originale
+                const originalIcon = buttonEl.innerHTML;
+                
+                // Icona di "check" (successo)
+                const successIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-green-500">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                                     </svg>`;
+                
+                try {
+                    // Usa la Clipboard API moderna
+                    await navigator.clipboard.writeText(valueToCopy);
+                    
+                    // Mostra icona successo
+                    buttonEl.innerHTML = successIcon;
+                    buttonEl.disabled = true;
+
+                    // Ripristina l'icona originale dopo 1.5 sec
+                    setTimeout(() => {
+                        buttonEl.innerHTML = originalIcon;
+                        buttonEl.disabled = false;
+                    }, 1500);
+
+                } catch (err) {
+                    console.error('Errore durante la copia del valore:', err);
+                    // (Opzionale) Si potrebbe mostrare un'icona di errore
+                }
+            }
+            // --- FINE MODIFICA (JS) 2 ---
+
             function copyTableToClipboard(tableId, buttonEl) {
                 const table = document.getElementById(tableId);
                 if (!table) return;
