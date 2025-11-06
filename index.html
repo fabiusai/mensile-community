@@ -273,7 +273,7 @@
 
     </main>
 
-    <script>
+<script>
         document.addEventListener('DOMContentLoaded', () => {
 
             // --- Selettori DOM ---
@@ -335,7 +335,9 @@
             
             // 3. LISTENER EVENTI MODIFICATI
             downloadBarBtn.addEventListener('click', () => downloadPNG('chart-bar-wrapper', 'grafico_barre.png', downloadBarBtn));
-            downloadDonutBtn.addEventListener('click', () => downloadPNG('chart-donut-wrapper', 'grafico_torta.png', downloadDonutBtn));
+            
+            // --- MODIFICA 1: Aggiunto il parametro '112' per il crop ---
+            downloadDonutBtn.addEventListener('click', () => downloadPNG('chart-donut-wrapper', 'grafico_torta.png', downloadDonutBtn, 112));
             
             copyTableButton.addEventListener('click', () => copyTableToClipboard('dataTable', copyTableButton)); 
 
@@ -652,7 +654,8 @@
                 };
             }
             
-            // --- MODIFICA: Funzione getDonutChartOptions aggiornata ---
+
+           // --- Funzione getDonutChartOptions aggiornata ---
             function getDonutChartOptions(series, labels) {
                 
                 // Calcola il totale per il formatter della legenda
@@ -663,7 +666,7 @@
                     labels: labels,
                     chart: {
                         type: 'donut',
-                        height: 320, /* MODIFICA: Ridotto da 380 */
+                        height: 320, 
                         fontFamily: 'Nunito Sans, sans-serif'
                     },
                     // Ordine colori: [Utenti, Moderatori]
@@ -677,17 +680,19 @@
                         show: true,
                         position: 'top', 
                         horizontalAlign: 'center',
-                        offsetY: 5, /* MODIFICA: Ridotto da 15 */
+                        offsetY: 5, 
                         fontSize: '20px', 
                         fontWeight: 700, 
                         labels: {
-                            colors: chartColors.title 
+                            // --- MODIFICA 2: Blu etichette uniformato al blu "moderator" ---
+                            colors: chartColors.moderator 
                         },
                         markers: {
                             width: 18, 
                             height: 18, 
                             radius: 3, 
-                            offsetY: 8 
+                            // --- MODIFICA 3: Pallini abbassati (da 8 a 10) ---
+                            offsetY: 10 
                         },
                         itemMargin: {
                             horizontal: 15,
@@ -695,14 +700,15 @@
                         },
                         formatter: function (seriesName, opts) {
                             const percent = (series[opts.seriesIndex] / total * 100).toFixed(0);
-                            const grayColor = '#333333';
+                            // --- MODIFICA 1: Grigio valori uniformato al grigio "text" dei grafici ---
+                            const grayColor = chartColors.text; // Era '#333333'
                             return `${seriesName} <span style="font-weight: 400; color: ${grayColor}; margin-left: 6px;">${percent}%</span>`;
                         }
                     },
                     
                     plotOptions: {
                         pie: {
-                            offsetY: 20, /* MODIFICA: Ridotto da 40 */
+                            offsetY: 20, 
                             donut: {
                                 size: '65%', 
                                 labels: {
@@ -734,7 +740,9 @@
                 };
             }
 
-            async function downloadPNG(elementIdToCapture, filename, buttonEl) {
+
+            // --- MODIFICA 2: Funzione downloadPNG aggiornata per accettare 'cropBottomPx' ---
+            async function downloadPNG(elementIdToCapture, filename, buttonEl, cropBottomPx = 0) {
                 const elementToCapture = document.getElementById(elementIdToCapture);
                 if (!elementToCapture) {
                     showError("Elemento del grafico non trovato: #" + elementIdToCapture);
@@ -754,8 +762,31 @@
                         backgroundColor: '#ffffff',
                         logging: false
                     });
+                    
+                    let dataUrl;
 
-                    const dataUrl = canvas.toDataURL('image/png');
+                    // Logica di ritaglio
+                    if (cropBottomPx > 0 && canvas.height > cropBottomPx) {
+                        const originalWidth = canvas.width;
+                        const originalHeight = canvas.height;
+                        const newHeight = originalHeight - cropBottomPx;
+
+                        const croppedCanvas = document.createElement('canvas');
+                        const ctx = croppedCanvas.getContext('2d');
+                        
+                        croppedCanvas.width = originalWidth;
+                        croppedCanvas.height = newHeight;
+                        
+                        // Disegna l'immagine ritagliata (dall'angolo 0,0 fino alla nuova altezza)
+                        ctx.drawImage(canvas, 0, 0, originalWidth, newHeight, 0, 0, originalWidth, newHeight);
+                        
+                        dataUrl = croppedCanvas.toDataURL('image/png');
+                    } else {
+                        // Comportamento originale se non c'è crop
+                        dataUrl = canvas.toDataURL('image/png');
+                    }
+                    // Fine logica di ritaglio
+
                     const link = document.createElement('a');
                     link.href = dataUrl;
                     
