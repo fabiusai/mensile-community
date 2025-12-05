@@ -96,6 +96,17 @@
             color: #a0aec0;
             cursor: not-allowed;
         }
+        
+        /* Bottone JSON (Nuovo Stile per differenziarlo) */
+        .btn-json {
+            background-color: #1e293b; /* slate-800 */
+            color: var(--brand-yellow);
+            border-color: #1e293b;
+        }
+        .btn-json:hover {
+            background-color: #0f172a; /* slate-900 */
+            color: white;
+        }
 
         /* Stile Tabs */
         .tab-button {
@@ -346,6 +357,14 @@
                     </svg>
                     <span class="btn-text">Scarica Grafico a Torta (PNG)</span>
                 </button>
+
+                <!-- NUOVO TASTO EXECUTIVE SUMMARY -->
+                <button id="downloadJsonBtn" class="btn btn-json">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
+                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                    </svg>
+                    <span class="btn-text">Executive Summary</span>
+                </button>
                 
             </div>
         </section>
@@ -379,6 +398,7 @@
             // 3. SELETTORI BOTTONI MODIFICATI
             const downloadBarBtn = document.getElementById('downloadBarBtn');
             const downloadDonutBtn = document.getElementById('downloadDonutBtn');
+            const downloadJsonBtn = document.getElementById('downloadJsonBtn'); // NUOVO
             
             // Errori
             const errorMessage = document.getElementById('errorMessage');
@@ -428,6 +448,9 @@
             // --- MODIFICA 1: Aggiunto il parametro '112' per il crop ---
             downloadDonutBtn.addEventListener('click', () => downloadPNG('chart-donut-wrapper', 'grafico_torta.png', downloadDonutBtn, 112));
             
+            // NUOVO LISTENER PER JSON
+            downloadJsonBtn.addEventListener('click', handleExportExecutiveSummary);
+
             copyTableButton.addEventListener('click', () => copyTableToClipboard('dataTable', copyTableButton)); 
 
             // 1) ELIMINATO: Event listener per lo slider del font
@@ -1116,6 +1139,169 @@
                 }
             }
             // --- FINE MODIFICA (JS) 2 ---
+            
+            // ==========================================
+            // NUOVA FUNZIONALITÀ: EXECUTIVE SUMMARY JSON
+            // ==========================================
+
+            // 1. Formattazione Numeri (K/M)
+            function formatSmartNumber(num) {
+                if (num === null || num === undefined) return "0";
+                
+                let value = num;
+                let suffix = '';
+
+                if (Math.abs(num) >= 1000000) {
+                    value = num / 1000000;
+                    suffix = 'M';
+                } else if (Math.abs(num) >= 999) {
+                    value = num / 1000;
+                    suffix = 'K';
+                }
+
+                // Arrotonda a 2 decimali e rimuove zeri finali (es. 15.00 -> 15)
+                let formatted = parseFloat(value.toFixed(2)).toString();
+                
+                // Sostituisce il punto con la virgola
+                formatted = formatted.replace('.', ',');
+                
+                return formatted + suffix;
+            }
+
+            // 2. Logica Trend
+            function getTrendDescription(changeValue) {
+                // Se la cella è vuota o undefined
+                if (changeValue === null || changeValue === undefined) return "N/D";
+                
+                // Excel solitamente salva le percentuali come decimali (es. 2% = 0.02)
+                // Se il valore è > 1 assumiamo sia già percentuale intera (es 2.5), ma standard è < 1
+                
+                const absValue = Math.abs(changeValue);
+                const isPositive = changeValue >= 0;
+                const baseText = isPositive ? "crescita" : "riduzione";
+                
+                let prefix = "";
+
+                // Soglia 2% (0.02)
+                if (absValue < 0.02) {
+                    prefix = "lieve ";
+                } 
+                // Soglia 10% (0.10)
+                else if (absValue > 0.10) {
+                    prefix = "significativa ";
+                }
+
+                return `${prefix}${baseText}`;
+            }
+
+            // 3. Funzione Principale di Esportazione
+            function handleExportExecutiveSummary() {
+                if (!workbook) {
+                    showError("Nessun file caricato.");
+                    return;
+                }
+                
+                const btn = document.getElementById('downloadJsonBtn');
+                const btnTextEl = btn.querySelector('.btn-text');
+                const originalText = btnTextEl.textContent;
+                setButtonLoading(btn, btnTextEl, "Generazione...");
+
+                try {
+                    // --- 1. DATA E ORA ---
+                    const now = new Date();
+                    const aaaa = now.getFullYear();
+                    const mm = String(now.getMonth() + 1).padStart(2, '0');
+                    const gg = String(now.getDate()).padStart(2, '0');
+                    const hh = String(now.getHours()).padStart(2, '0');
+                    const min = String(now.getMinutes()).padStart(2, '0');
+                    
+                    const outputFileName = `ES3_${aaaa}_${mm}_${gg}_${hh}_${min}.json`;
+
+                    // --- 2. ESTRAZIONE DATI ---
+                    
+                    // A) Totale Commenti
+                    let totalComments = 0;
+                    const sheetComments = workbook.Sheets["Number of comments"];
+                    if (sheetComments) {
+                         const { total } = parseCommentsByPlatform(sheetComments);
+                         totalComments = total;
+                    }
+
+                    // B) Top Topic & Percentuale
+                    let topTopicName = "N/D";
+                    let topTopicPercent = "0%";
+                    const sheetTopics = workbook.Sheets["Temi trattati Poste Italiane FB"];
+                    
+                    if (sheetTopics) {
+                        const jsonTopics = XLSX.utils.sheet_to_json(sheetTopics, { 
+                            range: "A15:B50", 
+                            header: ["Argomento", "Valore"]
+                        });
+                        
+                        let topicsData = [];
+                        let totalTopicsCount = 0;
+                        
+                        jsonTopics.forEach(row => {
+                            const arg = row['Argomento'];
+                            const val = parseInt(row['Valore'], 10) || 0;
+                            if(arg && val > 0) {
+                                topicsData.push({ name: arg, count: val });
+                                totalTopicsCount += val;
+                            }
+                        });
+                        
+                        // Trova il max
+                        if (topicsData.length > 0) {
+                            topicsData.sort((a, b) => b.count - a.count);
+                            const best = topicsData[0];
+                            topTopicName = best.name;
+                            
+                            if (totalTopicsCount > 0) {
+                                // Calcolo percentuale
+                                const pct = (best.count / totalTopicsCount) * 100;
+                                topTopicPercent = formatSmartNumber(pct) + "%";
+                            }
+                        }
+                    }
+
+                    // C) Variazione Trend (Cella C16 di "Number of comments (2)")
+                    let trendDesc = "N/D";
+                    const sheetTrend = workbook.Sheets["Number of comments (2)"];
+                    if (sheetTrend) {
+                        const cell = sheetTrend['C16'];
+                        if (cell && cell.v !== undefined) {
+                            trendDesc = getTrendDescription(cell.v);
+                        }
+                    }
+
+                    // --- 3. COSTRUZIONE JSON ---
+                    const exportData = {
+                        "Totale commenti": formatSmartNumber(totalComments),
+                        "Dettaglio Argomenti: Temi trattati Poste Italiane FB: l'argomento con più commenti": topTopicName,
+                        "Dettaglio Argomenti: valore in percentuale commenti argomento Temi trattati Poste Italiane FB": topTopicPercent,
+                        "Variazione commenti rispetto al mese precedente": trendDesc
+                    };
+
+                    // --- 4. DOWNLOAD ---
+                    const jsonString = JSON.stringify(exportData, null, 2);
+                    const blob = new Blob([jsonString], { type: "application/json" });
+                    const href = URL.createObjectURL(blob);
+                    
+                    const link = document.createElement('a');
+                    link.href = href;
+                    link.download = outputFileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    setButtonDone(btn, btnTextEl, "Scaricato!", originalText);
+
+                } catch (err) {
+                    console.error("Errore JSON Export:", err);
+                    setButtonError(btn, btnTextEl, "Errore Dati", originalText);
+                }
+            }
+
 
             function copyTableToClipboard(tableId, buttonEl) {
                 const table = document.getElementById(tableId);
