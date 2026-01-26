@@ -609,46 +609,467 @@
 
             }
             
-            // Funzione per processare la tabella Argomenti
+            // Funzione per processare la tabella Argomenti + Grafico Anello Custom
             function processTableSheet(ws, sheetName) {
-                // Legge i dati da A15 in giù
+                // 1. Lettura Dati
                 const json = XLSX.utils.sheet_to_json(ws, { 
-                    range: "A15:B50", // Range ampio per sicurezza
+                    range: "A15:B50", 
                     header: ["Argomento", "Valore"],
                 });
 
-                tableTitle.textContent = `Dettaglio Argomenti: ${sheetName}`;
+                let rawData = [];
+                let tableTotal = 0;
 
-                let tableHtml = `<table id="dataTable" class="data-table w-full text-left border-collapse">
-                                    <thead>
-                                        <tr class="bg-gray-100 border-b-2 border-brand-blue">
-                                            <th class="p-3 text-sm font-bold text-brand-dark-blue uppercase">Argomento</th>
-                                            <th class="p-3 text-sm font-bold text-brand-dark-blue uppercase text-right">Valore</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody>`;
-                
-                let total = 0;
                 json.forEach(row => {
                     const argomento = row['Argomento'];
                     const valore = parseInt(row['Valore'], 10) || 0;
-                    if (argomento && valore > 0) { // Salta righe vuote o con valore 0
-                        tableHtml += `<tr class="border-b border-gray-200 hover:bg-gray-50">
-                                        <td class="p-3">${argomento}</td>
-                                        <td class="p-3 text-right font-medium">${valore.toLocaleString('it-IT')}</td>
-                                      </tr>`;
-                        total += valore;
+                    if (argomento && valore > 0) {
+                        rawData.push({ label: argomento, value: valore });
+                        tableTotal += valore;
                     }
                 });
 
-                // Riga Totale
-                tableHtml += `<tr class="bg-gray-200 border-t-2 border-brand-dark-blue">
-                                <td class="p-3 font-bold text-brand-dark-blue">TOTALE</td>
-                                <td class="p-3 text-right font-bold text-brand-dark-blue">${total.toLocaleString('it-IT')}</td>
-                              </tr>`;
+                // 2. Ricostruzione DOM Wrapper per Accordion e Grafico
+                const wrapper = document.getElementById('tableContainerWrapper');
+                wrapper.innerHTML = `
+                    <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
+                        Dettaglio Argomenti: ${sheetName}
+                    </h2>
 
-                tableHtml += `</tbody></table>`;
-                tableContainer.innerHTML = tableHtml;
+                    <details class="group bg-gray-50 rounded-lg border border-gray-200 shadow-sm mb-12 overflow-hidden">
+                        <summary class="flex items-center justify-between cursor-pointer p-4 bg-white hover:bg-gray-50 transition-colors">
+                            <h3 class="font-bold text-brand-blue flex items-center gap-2 select-none">
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform group-open:rotate-180 transition-transform text-brand-yellow" viewBox="0 0 20 20" fill="currentColor">
+                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+                                </svg>
+                                Mostra Tabella Dati
+                            </h3>
+                            <span class="text-sm text-gray-400">Clicca per espandere</span>
+                        </summary>
+                        
+                        <div class="p-6 border-t border-gray-200">
+                            <div class="flex justify-end mb-4">
+                                <button id="btnCopyTableInternal" class="btn btn-secondary text-sm py-2 px-4">
+                                    Copia Tabella
+                                </button>
+                            </div>
+                            <div class="overflow-y-auto max-h-[400px] border border-gray-200 rounded-lg">
+                                <table id="dataTable" class="w-full text-left border-collapse">
+                                    <thead>
+                                        <tr class="bg-gray-100 border-b-2 border-brand-blue sticky top-0 z-10 shadow-sm">
+                                            <th class="p-3 text-sm font-bold text-brand-dark-blue uppercase bg-gray-100">Argomento</th>
+                                            <th class="p-3 text-sm font-bold text-brand-dark-blue uppercase text-right bg-gray-100">Valore</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        ${rawData.map(row => `
+                                            <tr class="border-b border-gray-200 hover:bg-gray-50">
+                                                <td class="p-3 text-gray-700">${row.label}</td>
+                                                <td class="p-3 text-right font-medium text-brand-dark-blue">${row.value.toLocaleString('it-IT')}</td>
+                                            </tr>
+                                        `).join('')}
+                                        <tr class="bg-gray-200 border-t-2 border-brand-dark-blue font-bold text-brand-dark-blue">
+                                            <td class="p-3">TOTALE</td>
+                                            <td class="p-3 text-right">${tableTotal.toLocaleString('it-IT')}</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </details>
+
+                    <div class="bg-white rounded-lg p-2">
+                        <h3 class="text-xl font-bold text-brand-dark-blue mb-6 text-center">Ripartizione Tematiche</h3>
+                        
+                        <div class="bg-gray-100 p-4 rounded-lg mb-6 flex flex-wrap gap-6 items-end justify-center border border-gray-200">
+                            
+                            <div class="flex flex-col gap-1">
+                                <label class="text-xs font-bold text-gray-500 uppercase">Dimensione Font</label>
+                                <input type="range" id="chartFontSize" min="12" max="40" value="24" class="w-32 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-brand-blue">
+                            </div>
+
+                            <div class="flex flex-col gap-1 w-24">
+                                <label class="text-xs font-bold text-gray-500 uppercase">Decimali</label>
+                                <input type="number" id="chartDecimals" min="0" max="3" value="1" class="p-1 border border-gray-300 rounded text-center font-bold text-brand-dark-blue focus:ring-2 focus:ring-brand-yellow outline-none">
+                            </div>
+
+                            <div class="flex flex-col gap-1 w-32">
+                                <label class="text-xs font-bold text-gray-500 uppercase" title="Accorpa voci sotto questa percentuale">Soglia 'Varie'</label>
+                                <input type="number" id="chartThreshold" min="0" max="100" step="0.5" value="0" class="p-1 border border-gray-300 rounded text-center font-bold text-brand-dark-blue focus:ring-2 focus:ring-brand-yellow outline-none" placeholder="% min">
+                            </div>
+
+                            <div class="flex gap-2 pb-0.5">
+                                <button id="chartShuffle" class="bg-brand-yellow text-brand-dark-blue hover:bg-yellow-400 px-4 py-1.5 rounded font-bold text-sm transition-colors shadow-sm flex items-center gap-1">
+                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
+                                    Ordine Casuale
+                                </button>
+                                <button id="chartRefresh" class="bg-brand-blue text-white hover:bg-brand-dark-blue px-4 py-1.5 rounded font-bold text-sm transition-colors shadow-sm">Aggiorna</button>
+                                <button id="chartReset" class="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 px-4 py-1.5 rounded font-bold text-sm transition-colors shadow-sm">Reset</button>
+                            </div>
+                        </div>
+
+                        <div class="relative w-full overflow-x-auto flex justify-center pb-4">
+                            <canvas id="temiChartCanvas" width="1370" height="1000" style="width: 100%; max-width: 1000px; height: auto; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 8px;"></canvas>
+                        </div>
+                        
+                        <div class="text-center mt-4 flex justify-center gap-3">
+                             <button id="btnDownloadTemiChart" class="btn btn-secondary text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
+                                Scarica PNG
+                            </button>
+                            <button id="btnDownloadTemiSvg" class="btn btn-secondary text-sm">
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" /></svg>
+                                Scarica SVG
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // 3. Gestione Eventi
+                document.getElementById('btnCopyTableInternal').addEventListener('click', function() {
+                    copyTableToClipboard('dataTable', this);
+                });
+
+                document.getElementById('btnDownloadTemiChart').addEventListener('click', async function() {
+                    const canvas = document.getElementById('temiChartCanvas');
+                    const link = document.createElement('a');
+                    link.download = `Temi_Poste_${new Date().toISOString().slice(0,10)}.png`;
+                    link.href = canvas.toDataURL('image/png');
+                    link.click();
+                });
+
+                document.getElementById('btnDownloadTemiSvg').addEventListener('click', function() {
+                    const w = 1370, h = 1000, cx = w/2, cy = h/2, r = 300, ir = 190;
+                    const data = currentProcessedData;
+                    const total = data.reduce((a, b) => a + b.value, 0);
+                    const fontSize = parseInt(controls.fontSize.value) || 24;
+                    const decimals = parseInt(controls.decimals.value);
+                    const pctFontSize = Math.max(12, fontSize - 4); // Calcolo esplicito dimensione font percentuale
+
+                    const getCol = (idx, tot) => {
+                         const stops = [{p:0,c:[0,43,92]},{p:0.4,c:[1,70,188]},{p:0.8,c:[76,161,255]},{p:1,c:[210,235,255]}];
+                         if(tot<=1) return `rgb(${stops[0].c.join(',')})`;
+                         const t = idx/(tot-1);
+                         let s=stops[0], e=stops[stops.length-1];
+                         for(let i=0; i<stops.length-1; i++){ if(t>=stops[i].p && t<=stops[i+1].p){ s=stops[i]; e=stops[i+1]; break; } }
+                         const range = e.p - s.p, lt = (t-s.p)/range;
+                         const rgb = s.c.map((v,k) => Math.round(v + (e.c[k]-v)*lt));
+                         return `rgb(${rgb.join(',')})`;
+                    };
+
+                    // PPT FIX: Rimosso attributo style inline nel tag SVG, usati font standard Arial
+                    let svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
+                    svg += `<rect width="${w}" height="${h}" fill="#ffffff"/>`;
+
+                    let startA = -Math.PI/2, labels = [];
+                    
+                    data.forEach((d, i) => {
+                        const sliceA = (d.value/total)*(2*Math.PI), endA = startA + sliceA;
+                        const x1 = cx+r*Math.cos(startA), y1 = cy+r*Math.sin(startA);
+                        const x2 = cx+r*Math.cos(endA), y2 = cy+r*Math.sin(endA);
+                        const xi1 = cx+ir*Math.cos(startA), yi1 = cy+ir*Math.sin(startA);
+                        const xi2 = cx+ir*Math.cos(endA), yi2 = cy+ir*Math.sin(endA);
+                        const large = sliceA > Math.PI ? 1 : 0;
+                        const path = `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${xi2} ${yi2} A ${ir} ${ir} 0 ${large} 0 ${xi1} ${yi1} Z`;
+                        
+                        svg += `<path d="${path}" fill="${getCol(i, data.length)}" stroke="#ffffff" stroke-width="4"/>`;
+                        
+                        const midA = startA + sliceA/2;
+                        const pct = parseFloat(((d.value/total)*100).toFixed(decimals)).toLocaleString('it-IT',{minimumFractionDigits:0,maximumFractionDigits:decimals})+"%";
+                        labels.push({ 
+                            t: d.label, p: pct, 
+                            y: cy+Math.sin(midA)*r, 
+                            ax: cx+Math.cos(midA)*r, ay: cy+Math.sin(midA)*r, 
+                            isR: (midA > -Math.PI/2 && midA < Math.PI/2) 
+                        });
+                        startA = endA;
+                    });
+
+                    const drawSide = (items, xPos, align) => {
+                        if(!items.length) return;
+                        items.sort((a,b) => a.ay - b.ay);
+                        const sp = fontSize * 2.5;
+                        for(let i=0; i<items.length-1; i++) if(items[i+1].y < items[i].y + sp) items[i+1].y = items[i].y + sp;
+                        const last = items[items.length-1], first = items[0];
+                        if(last.y > h-50) items.forEach(l => l.y -= (last.y - (h-50)));
+                        if(first.y < 50) items.forEach(l => l.y += (50 - first.y));
+                        
+                        items.forEach(l => {
+                            const ex = l.isR ? l.ax+40 : l.ax-40;
+                            const tx = align==='start' ? xPos+10 : xPos-10;
+                            
+                            svg += `<path d="M ${l.ax} ${l.ay} L ${ex} ${l.ay} L ${ex} ${l.y} L ${tx} ${l.y}" stroke="#9ca3af" stroke-width="1.5" fill="none"/>`;
+                            
+                            // PPT FIX: Font Arial esplicito su ogni elemento, rimozione alignment-baseline
+                            // La seconda riga viene posizionata calcolando Y manualmente invece di usare 'hanging'
+                            
+                            svg += `<text x="${xPos}" y="${l.y-5}" text-anchor="${align}" fill="#0146bc" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold">${l.t.replace(/&/g, '&amp;')}</text>`;
+                            svg += `<text x="${xPos}" y="${l.y + pctFontSize + 2}" text-anchor="${align}" fill="#002b5c" font-family="Arial, sans-serif" font-size="${pctFontSize}">${l.p}</text>`;
+                        });
+                    };
+
+                    drawSide(labels.filter(l=>l.isR), cx+r+80, 'start');
+                    drawSide(labels.filter(l=>!l.isR), cx-r-80, 'end');
+
+                    svg += `</svg>`;
+                    
+                    const blob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
+                    const url = URL.createObjectURL(blob);
+                    const dlLink = document.createElement('a');
+                    dlLink.href = url;
+                    dlLink.download = `Temi_Poste_${new Date().toISOString().slice(0,10)}.svg`;
+                    document.body.appendChild(dlLink);
+                    dlLink.click();
+                    document.body.removeChild(dlLink);
+                });
+
+                // Setup Variabili Grafico
+                const canvas = document.getElementById('temiChartCanvas');
+                const ctx = canvas.getContext('2d');
+                const controls = {
+                    fontSize: document.getElementById('chartFontSize'),
+                    decimals: document.getElementById('chartDecimals'),
+                    threshold: document.getElementById('chartThreshold'),
+                    btnRefresh: document.getElementById('chartRefresh'),
+                    btnReset: document.getElementById('chartReset'),
+                    btnShuffle: document.getElementById('chartShuffle')
+                };
+
+                // STATO GLOBALE
+                let currentProcessedData = []; 
+
+                // Funzione 1: Prepara i dati (Soglia %, Sort, Altro in fondo)
+                function prepareData() {
+                    const thresholdPercent = parseFloat(controls.threshold.value) || 0;
+                    const totalTotal = rawData.reduce((acc, curr) => acc + curr.value, 0);
+
+                    let mainItems = [];
+                    let othersValue = 0;
+
+                    rawData.forEach(item => {
+                        const pct = (item.value / totalTotal) * 100;
+                        if (pct < thresholdPercent) {
+                            othersValue += item.value;
+                        } else {
+                            mainItems.push({ ...item });
+                        }
+                    });
+
+                    mainItems.sort((a, b) => b.value - a.value);
+
+                    let finalData = [...mainItems];
+                    if (othersValue > 0) {
+                        finalData.push({ label: 'Altro', value: othersValue, isOther: true });
+                    }
+                    
+                    currentProcessedData = finalData;
+                    drawChart();
+                }
+
+                // Funzione 2: Disegna
+                function drawChart() {
+                    const fontSize = parseInt(controls.fontSize.value) || 24;
+                    const decimals = parseInt(controls.decimals.value); 
+                    
+                    const chartData = currentProcessedData;
+                    const totalVal = chartData.reduce((acc, curr) => acc + curr.value, 0);
+
+                    ctx.clearRect(0, 0, canvas.width, canvas.height);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    const centerX = canvas.width / 2;
+                    const centerY = canvas.height / 2;
+                    const radius = 300; 
+                    const innerRadius = 190;
+                    const fontFace = "'Nunito Sans', 'Avenir Next LT Pro', 'Helvetica Neue', sans-serif";
+                    
+                    // --- NUOVA LOGICA COLORI: GRADIENTE VIBRANTE ---
+                    function getColor(index, total) {
+                        // Palette ispirata al Benchmark (non grigia, ma satura)
+                        const stops = [
+                            { pct: 0.0, color: { r: 0, g: 43, b: 92 } },   // #002b5c (Dark Poste)
+                            { pct: 0.4, color: { r: 1, g: 70, b: 188 } },  // #0146bc (Brand Blue - Satura)
+                            { pct: 0.8, color: { r: 76, g: 161, b: 255 } }, // #4ca1ff (Sky Blue - Satura)
+                            { pct: 1.0, color: { r: 210, g: 235, b: 255 } } // #d2ebff (Pale Blue - Clean)
+                        ];
+
+                        if (total <= 1) return `rgb(${stops[0].color.r}, ${stops[0].color.g}, ${stops[0].color.b})`;
+
+                        // Posizione normalizzata (0..1)
+                        const t = index / (total - 1);
+
+                        // Trova i due stop tra cui si trova t
+                        let start = stops[0];
+                        let end = stops[stops.length - 1];
+
+                        for (let i = 0; i < stops.length - 1; i++) {
+                            if (t >= stops[i].pct && t <= stops[i+1].pct) {
+                                start = stops[i];
+                                end = stops[i+1];
+                                break;
+                            }
+                        }
+
+                        // Interpola tra start e end
+                        // Normalizza t nel range locale [0..1]
+                        const range = end.pct - start.pct;
+                        const localT = (t - start.pct) / range;
+
+                        const r = start.color.r + (end.color.r - start.color.r) * localT;
+                        const g = start.color.g + (end.color.g - start.color.g) * localT;
+                        const b = start.color.b + (end.color.b - start.color.b) * localT;
+
+                        return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+                    }
+
+                    // Disegno Spicchi
+                    let startAngle = -Math.PI / 2;
+                    let labels = [];
+
+                    chartData.forEach((slice, i) => {
+                        const sliceAngle = (slice.value / totalVal) * (2 * Math.PI);
+                        const endAngle = startAngle + sliceAngle;
+                        
+                        ctx.fillStyle = getColor(i, chartData.length);
+                        ctx.beginPath();
+                        ctx.moveTo(centerX, centerY);
+                        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
+                        ctx.closePath();
+                        ctx.fill();
+                        
+                        ctx.lineWidth = 4;
+                        ctx.strokeStyle = "#ffffff";
+                        ctx.stroke();
+
+                        const midAngle = startAngle + sliceAngle / 2;
+                        let pctVal = (slice.value / totalVal) * 100;
+                        let pctString = parseFloat(pctVal.toFixed(decimals)).toLocaleString('it-IT', {
+                            minimumFractionDigits: 0, 
+                            maximumFractionDigits: decimals
+                        }) + "%";
+
+                        labels.push({
+                            text: slice.label,
+                            pct: pctString,
+                            angle: midAngle,
+                            anchorX: centerX + Math.cos(midAngle) * radius,
+                            anchorY: centerY + Math.sin(midAngle) * radius,
+                            isRight: (midAngle > -Math.PI/2 && midAngle < Math.PI/2),
+                            targetY: centerY + Math.sin(midAngle) * radius, 
+                        });
+
+                        startAngle = endAngle;
+                    });
+
+                    // Foro Centrale
+                    ctx.beginPath();
+                    ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fill();
+
+                    // Disegno Etichette (Algoritmo No-Overlap)
+                    const labelXRight = centerX + radius + 80;
+                    const labelXLeft = centerX - radius - 80; 
+                    
+                    let rightLabels = labels.filter(l => l.isRight);
+                    let leftLabels = labels.filter(l => !l.isRight);
+
+                    function distributeAndDraw(items, xPos, align) {
+                        if (items.length === 0) return;
+                        
+                        // Sort geometrico
+                        items.sort((a, b) => a.anchorY - b.anchorY);
+                        const spacing = fontSize * 2.5; 
+
+                        // Stack
+                        for (let i = 0; i < items.length - 1; i++) {
+                            const current = items[i];
+                            const next = items[i+1];
+                            if (next.targetY < current.targetY + spacing) {
+                                next.targetY = current.targetY + spacing;
+                            }
+                        }
+
+                        // Shift
+                        const bottomLimit = canvas.height - 50;
+                        const topLimit = 50;
+                        const lastItem = items[items.length - 1];
+                        if (lastItem.targetY > bottomLimit) {
+                            const diff = lastItem.targetY - bottomLimit;
+                            items.forEach(item => item.targetY -= diff);
+                        }
+                        const firstItem = items[0];
+                        if (firstItem.targetY < topLimit) {
+                            const diff = topLimit - firstItem.targetY;
+                            items.forEach(item => item.targetY += diff);
+                        }
+
+                        // Draw
+                        items.forEach(l => {
+                            const y = l.targetY;
+                            // Calcolo X del gomito basato sul raggio esterno fisso per allineare le pieghe verticalmente
+                            const breakX = l.isRight ? (centerX + radius + 30) : (centerX - radius - 30);
+
+                            ctx.beginPath();
+                            ctx.lineWidth = 1.5;
+                            ctx.strokeStyle = "#9ca3af";
+                            
+                            // Segmento 1: Obliquo (dal bordo fetta al gomito allineato in altezza)
+                            // Questo crea l'effetto raggiera puntando verso il centro
+                            ctx.moveTo(l.anchorX, l.anchorY);
+                            ctx.lineTo(breakX, y);
+                            
+                            // Segmento 2: Orizzontale (dal gomito al testo)
+                            ctx.lineTo(align === 'left' ? xPos + 10 : xPos - 10, y);
+                            ctx.stroke();
+
+                            ctx.font = `bold ${fontSize}px ${fontFace}`;
+                            ctx.fillStyle = "#0146bc";
+                            ctx.textAlign = align;
+                            ctx.textBaseline = "bottom";
+                            ctx.fillText(l.text, xPos, y - 2);
+                            
+                            ctx.font = `normal ${Math.max(12, fontSize - 4)}px ${fontFace}`;
+                            ctx.fillStyle = "#002b5c";
+                            ctx.textBaseline = "top";
+                            ctx.fillText(l.pct, xPos, y + 2);
+                        });
+                    }
+
+                    distributeAndDraw(rightLabels, labelXRight, 'left');
+                    distributeAndDraw(leftLabels, labelXLeft, 'right');
+                }
+
+                // LISTENERS
+                controls.fontSize.addEventListener('input', drawChart);
+                controls.decimals.addEventListener('input', drawChart);
+                controls.btnRefresh.addEventListener('click', drawChart);
+                controls.threshold.addEventListener('change', prepareData);
+
+                controls.btnReset.addEventListener('click', () => {
+                    controls.fontSize.value = 24;
+                    controls.decimals.value = 1;
+                    controls.threshold.value = 0;
+                    prepareData(); 
+                });
+
+                // Tasto Shuffle
+                controls.btnShuffle.addEventListener('click', () => {
+                    let limit = currentProcessedData.length;
+                    if (currentProcessedData.length > 0 && currentProcessedData[currentProcessedData.length-1].isOther) {
+                        limit = currentProcessedData.length - 1; 
+                    }
+                    
+                    for (let i = limit - 1; i > 0; i--) {
+                        const j = Math.floor(Math.random() * (i + 1));
+                        [currentProcessedData[i], currentProcessedData[j]] = [currentProcessedData[j], currentProcessedData[i]];
+                    }
+                    drawChart();
+                });
+
+                setTimeout(prepareData, 100);
             }
 
             // --- INIZIO MODIFICA 3: Aggiunte funzioni per Summary ---
