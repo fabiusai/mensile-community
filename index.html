@@ -794,8 +794,8 @@
                     // PPT FIX: Rimosso attributo style inline nel tag SVG, usati font standard Arial
                     let svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
                     <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
-                    svg += `<rect width="${w}" height="${h}" fill="#ffffff"/>`;
-
+                    // MODIFICA: Rimossa la rect di sfondo bianca per rendere l'SVG trasparente
+                    
                     let startA = -Math.PI/2, labels = [];
                     
                     data.forEach((d, i) => {
@@ -919,14 +919,14 @@
                     const innerRadius = 190;
                     const fontFace = "'Nunito Sans', 'Avenir Next LT Pro', 'Helvetica Neue', sans-serif";
                     
-                    // --- NUOVA LOGICA COLORI: GRADIENTE VIBRANTE ---
+                    // --- NUOVA LOGICA COLORI: PREVALENZA CHIARI (Simil-Reference) ---
                     function getColor(index, total) {
-                        // Palette ispirata al Benchmark (non grigia, ma satura)
+                        // Modifica: Gradient shiftato verso i chiari molto prima per ottenere l'effetto "prevalenza chiara"
                         const stops = [
-                            { pct: 0.0, color: { r: 0, g: 43, b: 92 } },   // #002b5c (Dark Poste)
-                            { pct: 0.4, color: { r: 1, g: 70, b: 188 } },  // #0146bc (Brand Blue - Satura)
-                            { pct: 0.8, color: { r: 76, g: 161, b: 255 } }, // #4ca1ff (Sky Blue - Satura)
-                            { pct: 1.0, color: { r: 210, g: 235, b: 255 } } // #d2ebff (Pale Blue - Clean)
+                            { pct: 0.0, color: { r: 0, g: 43, b: 92 } },    // #002b5c (Dark Poste) - Inizio scuro
+                            { pct: 0.15, color: { r: 1, g: 70, b: 188 } },   // #0146bc (Brand Blue) - Transizione rapida al blu
+                            { pct: 0.4, color: { r: 175, g: 210, b: 255 } }, // #afd2ff (Very Light Blue) - Già molto chiaro al 40%
+                            { pct: 1.0, color: { r: 240, g: 248, b: 255 } }  // #f0f8ff (Almost White) - Coda chiarissima dominante
                         ];
 
                         if (total <= 1) return `rgb(${stops[0].color.r}, ${stops[0].color.g}, ${stops[0].color.b})`;
