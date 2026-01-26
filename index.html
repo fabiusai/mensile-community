@@ -970,8 +970,8 @@
                     ctx.fill();
 
                     // Disegno Etichette (Algoritmo No-Overlap)
-                    const labelXRight = centerX + radius + 80;
-                    const labelXLeft = centerX - radius - 80; 
+                    const labelXRight = centerX + radius + 40;
+                    const labelXLeft = centerX - radius - 40; 
                     
                     let rightLabels = labels.filter(l => l.isRight);
                     let leftLabels = labels.filter(l => !l.isRight);
