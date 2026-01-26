@@ -632,9 +632,17 @@
                 // 2. Ricostruzione DOM Wrapper per Accordion e Grafico
                 const wrapper = document.getElementById('tableContainerWrapper');
                 wrapper.innerHTML = `
-                    <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
-                        Dettaglio Argomenti: ${sheetName}
-                    </h2>
+                    <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-5 pb-3 border-b border-gray-200">
+                        <h2 class="text-2xl font-bold text-brand-dark-blue">
+                            Dettaglio Argomenti: ${sheetName}
+                        </h2>
+                        <button id="copyTableButton" class="btn btn-secondary mt-3 sm:mt-0">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
+                            </svg>
+                            <span class="btn-text">Copia Tabella</span>
+                        </button>
+                    </div>
 
                     <details class="group bg-gray-50 rounded-lg border border-gray-200 shadow-sm mb-12 overflow-hidden">
                         <summary class="flex items-center justify-between cursor-pointer p-4 bg-white hover:bg-gray-50 transition-colors">
@@ -648,11 +656,6 @@
                         </summary>
                         
                         <div class="p-6 border-t border-gray-200">
-                            <div class="flex justify-end mb-4">
-                                <button id="btnCopyTableInternal" class="btn btn-secondary text-sm py-2 px-4">
-                                    Copia Tabella
-                                </button>
-                            </div>
                             <div class="overflow-y-auto max-h-[400px] border border-gray-200 rounded-lg">
                                 <table id="dataTable" class="w-full text-left border-collapse">
                                     <thead>
@@ -725,9 +728,40 @@
                     </div>
                 `;
 
-                // 3. Gestione Eventi
-                document.getElementById('btnCopyTableInternal').addEventListener('click', function() {
-                    copyTableToClipboard('dataTable', this);
+                // 3. Gestione Eventi (Copia Tabella)
+                document.getElementById('copyTableButton').addEventListener('click', function() {
+                    // Generazione diretta TSV dai dati raw per permettere la copia anche ad accordion chiuso
+                    const btn = this;
+                    const btnTextEl = btn.querySelector('.btn-text');
+                    const originalText = btnTextEl.textContent;
+
+                    setButtonLoading(btn, btnTextEl, "Copia in corso...");
+
+                    try {
+                        // Costruzione manuale del TSV usando i dati in memoria (rawData)
+                        let tsv = "Argomento\tValore\n";
+                        rawData.forEach(row => {
+                            tsv += `${row.label}\t${row.value.toLocaleString('it-IT')}\n`;
+                        });
+                        tsv += `TOTALE\t${tableTotal.toLocaleString('it-IT')}`;
+
+                        // Creazione textarea temporanea
+                        const textArea = document.createElement('textarea');
+                        textArea.value = tsv;
+                        textArea.style.position = 'absolute';
+                        textArea.style.left = '-9999px';
+                        document.body.appendChild(textArea);
+                        
+                        // Selezione e copia
+                        textArea.select();
+                        document.execCommand('copy');
+                        document.body.removeChild(textArea);
+
+                        setButtonDone(btn, btnTextEl, "Copiato!", originalText);
+                    } catch (err) {
+                        console.error("Errore durante la copia:", err);
+                        setButtonError(btn, btnTextEl, "Errore", originalText);
+                    }
                 });
 
                 document.getElementById('btnDownloadTemiChart').addEventListener('click', async function() {
@@ -856,14 +890,14 @@
                         }
                     });
 
-                    mainItems.sort((a, b) => b.value - a.value);
-
-                    let finalData = [...mainItems];
+                    // MODIFICA: "Altro" aggiunto PRIMA del sort per svincolare il colore dalla posizione finale
                     if (othersValue > 0) {
-                        finalData.push({ label: 'Altro', value: othersValue, isOther: true });
+                        mainItems.push({ label: 'Altro', value: othersValue, isOther: true });
                     }
+
+                    mainItems.sort((a, b) => b.value - a.value);
                     
-                    currentProcessedData = finalData;
+                    currentProcessedData = mainItems;
                     drawChart();
                 }
 
@@ -970,8 +1004,8 @@
                     ctx.fill();
 
                     // Disegno Etichette (Algoritmo No-Overlap)
-                    const labelXRight = centerX + radius + 40;
-                    const labelXLeft = centerX - radius - 40; 
+                    const labelXRight = centerX + radius + 100; // Aumentato spazio per linea orizzontale
+                    const labelXLeft = centerX - radius - 100; 
                     
                     let rightLabels = labels.filter(l => l.isRight);
                     let leftLabels = labels.filter(l => !l.isRight);
@@ -1010,7 +1044,7 @@
                         items.forEach(l => {
                             const y = l.targetY;
                             // Calcolo X del gomito basato sul raggio esterno fisso per allineare le pieghe verticalmente
-                            const breakX = l.isRight ? (centerX + radius + 30) : (centerX - radius - 30);
+                            const breakX = l.isRight ? (centerX + radius + 20) : (centerX - radius - 20);
 
                             ctx.beginPath();
                             ctx.lineWidth = 1.5;
