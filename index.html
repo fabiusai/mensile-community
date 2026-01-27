@@ -631,6 +631,7 @@
 
                 // 2. Ricostruzione DOM Wrapper per Accordion e Grafico
                 const wrapper = document.getElementById('tableContainerWrapper');
+                // Canvas impostato a 1600x1100 per ratio 16:11
                 wrapper.innerHTML = `
                     <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-5 pb-3 border-b border-gray-200">
                         <h2 class="text-2xl font-bold text-brand-dark-blue">
@@ -688,12 +689,12 @@
                             
                             <div class="flex flex-col gap-1">
                                 <label class="text-xs font-bold text-gray-500 uppercase">Dimensione Font</label>
-                                <input type="range" id="chartFontSize" min="12" max="40" value="24" class="w-32 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-brand-blue">
+                                <input type="range" id="chartFontSize" min="16" max="40" value="30" class="w-32 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-brand-blue">
                             </div>
 
                             <div class="flex flex-col gap-1 w-24">
                                 <label class="text-xs font-bold text-gray-500 uppercase">Decimali</label>
-                                <input type="number" id="chartDecimals" min="0" max="3" value="1" class="p-1 border border-gray-300 rounded text-center font-bold text-brand-dark-blue focus:ring-2 focus:ring-brand-yellow outline-none">
+                                <input type="number" id="chartDecimals" min="0" max="2" value="1" class="p-1 border border-gray-300 rounded text-center font-bold text-brand-dark-blue focus:ring-2 focus:ring-brand-yellow outline-none">
                             </div>
 
                             <div class="flex flex-col gap-1 w-32">
@@ -702,17 +703,13 @@
                             </div>
 
                             <div class="flex gap-2 pb-0.5">
-                                <button id="chartShuffle" class="bg-brand-yellow text-brand-dark-blue hover:bg-yellow-400 px-4 py-1.5 rounded font-bold text-sm transition-colors shadow-sm flex items-center gap-1">
-                                    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>
-                                    Ordine Casuale
-                                </button>
-                                <button id="chartRefresh" class="bg-brand-blue text-white hover:bg-brand-dark-blue px-4 py-1.5 rounded font-bold text-sm transition-colors shadow-sm">Aggiorna</button>
+                                <button id="chartShuffle" class="hidden"></button> <button id="chartRefresh" class="bg-brand-blue text-white hover:bg-brand-dark-blue px-4 py-1.5 rounded font-bold text-sm transition-colors shadow-sm">Aggiorna</button>
                                 <button id="chartReset" class="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 px-4 py-1.5 rounded font-bold text-sm transition-colors shadow-sm">Reset</button>
                             </div>
                         </div>
 
                         <div class="relative w-full overflow-x-auto flex justify-center pb-4">
-                            <canvas id="temiChartCanvas" width="1370" height="1000" style="width: 100%; max-width: 1000px; height: auto; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 8px;"></canvas>
+                            <canvas id="temiChartCanvas" width="1600" height="1100" style="width: 100%; max-width: 1000px; height: auto; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 8px;"></canvas>
                         </div>
                         
                         <div class="text-center mt-4 flex justify-center gap-3">
@@ -730,36 +727,25 @@
 
                 // 3. Gestione Eventi (Copia Tabella)
                 document.getElementById('copyTableButton').addEventListener('click', function() {
-                    // Generazione diretta TSV dai dati raw per permettere la copia anche ad accordion chiuso
                     const btn = this;
                     const btnTextEl = btn.querySelector('.btn-text');
                     const originalText = btnTextEl.textContent;
-
                     setButtonLoading(btn, btnTextEl, "Copia in corso...");
-
                     try {
-                        // Costruzione manuale del TSV usando i dati in memoria (rawData)
                         let tsv = "Argomento\tValore\n";
-                        rawData.forEach(row => {
-                            tsv += `${row.label}\t${row.value.toLocaleString('it-IT')}\n`;
-                        });
+                        rawData.forEach(row => { tsv += `${row.label}\t${row.value.toLocaleString('it-IT')}\n`; });
                         tsv += `TOTALE\t${tableTotal.toLocaleString('it-IT')}`;
-
-                        // Creazione textarea temporanea
                         const textArea = document.createElement('textarea');
                         textArea.value = tsv;
                         textArea.style.position = 'absolute';
                         textArea.style.left = '-9999px';
                         document.body.appendChild(textArea);
-                        
-                        // Selezione e copia
                         textArea.select();
                         document.execCommand('copy');
                         document.body.removeChild(textArea);
-
                         setButtonDone(btn, btnTextEl, "Copiato!", originalText);
                     } catch (err) {
-                        console.error("Errore durante la copia:", err);
+                        console.error("Errore copia:", err);
                         setButtonError(btn, btnTextEl, "Errore", originalText);
                     }
                 });
@@ -772,79 +758,91 @@
                     link.click();
                 });
 
+                // EXPORT SVG REIMPLEMENTATO CON TRASPARENZA E STILE RICHIESTO
                 document.getElementById('btnDownloadTemiSvg').addEventListener('click', function() {
-                    const w = 1370, h = 1000, cx = w/2, cy = h/2, r = 300, ir = 190;
+                    const w = 1600, h = 1100;
                     const data = currentProcessedData;
                     const total = data.reduce((a, b) => a + b.value, 0);
-                    const fontSize = parseInt(controls.fontSize.value) || 24;
+                    const fontSize = parseInt(controls.fontSize.value) || 30;
                     const decimals = parseInt(controls.decimals.value);
-                    const pctFontSize = Math.max(12, fontSize - 4); // Calcolo esplicito dimensione font percentuale
+                    
+                    // Layout
+                    const marginLeft = 400;  
+                    const marginRight = 200; 
+                    const marginTop = 50;
+                    const marginBottom = 50;
+                    const chartW = w - marginLeft - marginRight;
+                    const chartH = h - marginTop - marginBottom;
+                    
+                    let maxPct = 0;
+                    data.forEach(d => {
+                        const val = (d.value / total) * 100;
+                        if(val > maxPct) maxPct = val;
+                    });
+                    const maxScale = maxPct * 1.1;
 
-                    const getCol = (idx, tot) => {
-                         const stops = [{p:0,c:[0,43,92]},{p:0.4,c:[1,70,188]},{p:0.8,c:[76,161,255]},{p:1,c:[210,235,255]}];
-                         if(tot<=1) return `rgb(${stops[0].c.join(',')})`;
+                    // Funzione gradiente tema chiaro (restituisce colore esadecimale per SVG)
+                    // MODIFICA COLORE: Inizia con il colore del font (Brand Blue #0146bc)
+                    const getThemeColor = (idx, tot) => {
+                         const stops = [
+                            {p:0.0, c:{r:1, g:70, b:188}},   // Brand Blue (#0146bc)
+                            {p:0.4, c:{r:138, g:182, b:249}}, // Light Blue
+                            {p:1.0, c:{r:220, g:238, b:255}}  // Pale
+                         ];
+                         if(tot<=1) return `rgb(${stops[0].c.r},${stops[0].c.g},${stops[0].c.b})`;
                          const t = idx/(tot-1);
                          let s=stops[0], e=stops[stops.length-1];
                          for(let i=0; i<stops.length-1; i++){ if(t>=stops[i].p && t<=stops[i+1].p){ s=stops[i]; e=stops[i+1]; break; } }
                          const range = e.p - s.p, lt = (t-s.p)/range;
-                         const rgb = s.c.map((v,k) => Math.round(v + (e.c[k]-v)*lt));
-                         return `rgb(${rgb.join(',')})`;
+                         const r = Math.round(s.c.r + (e.c.r-s.c.r)*lt);
+                         const g = Math.round(s.c.g + (e.c.g-s.c.g)*lt);
+                         const b = Math.round(s.c.b + (e.c.b-s.c.b)*lt);
+                         return `rgb(${r},${g},${b})`;
                     };
 
-                    // PPT FIX: Rimosso attributo style inline nel tag SVG, usati font standard Arial
+                    // Header SVG senza rect bianco di sfondo (Trasparente)
                     let svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
                     <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
-                    // MODIFICA: Rimossa la rect di sfondo bianca per rendere l'SVG trasparente
-                    
-                    let startA = -Math.PI/2, labels = [];
+
+                    // Griglia
+                    const steps = 5;
+                    for(let i = 1; i <= steps; i++) {
+                        const x = marginLeft + (chartW * (i / steps));
+                        svg += `<line x1="${x}" y1="${marginTop}" x2="${x}" y2="${h - marginBottom}" stroke="#e5e7eb" stroke-width="2" />`;
+                    }
+                    svg += `<line x1="${marginLeft}" y1="${marginTop}" x2="${marginLeft}" y2="${h - marginBottom}" stroke="#9ca3af" stroke-width="2" />`;
+
+                    // Disegno Barre
+                    const count = data.length;
+                    const rowHeight = chartH / count;
+                    const barHeight = rowHeight * 0.65;
+                    const r = 4; // Raggio stondatura destra
                     
                     data.forEach((d, i) => {
-                        const sliceA = (d.value/total)*(2*Math.PI), endA = startA + sliceA;
-                        const x1 = cx+r*Math.cos(startA), y1 = cy+r*Math.sin(startA);
-                        const x2 = cx+r*Math.cos(endA), y2 = cy+r*Math.sin(endA);
-                        const xi1 = cx+ir*Math.cos(startA), yi1 = cy+ir*Math.sin(startA);
-                        const xi2 = cx+ir*Math.cos(endA), yi2 = cy+ir*Math.sin(endA);
-                        const large = sliceA > Math.PI ? 1 : 0;
-                        const path = `M ${x1} ${y1} A ${r} ${r} 0 ${large} 1 ${x2} ${y2} L ${xi2} ${yi2} A ${ir} ${ir} 0 ${large} 0 ${xi1} ${yi1} Z`;
+                        const pctVal = (d.value / total) * 100;
+                        const barW = (pctVal / maxScale) * chartW;
+                        const yCenter = marginTop + (i * rowHeight) + (rowHeight / 2);
+                        const yBar = yCenter - (barHeight / 2);
                         
-                        svg += `<path d="${path}" fill="${getCol(i, data.length)}" stroke="#ffffff" stroke-width="4"/>`;
+                        // Path custom per stondatura solo a destra
+                        const x = marginLeft;
+                        const y = yBar;
+                        const hB = barHeight;
+                        // M top-left L top-right-curve ... Z
+                        const pathD = `M ${x} ${y} L ${x+barW-r} ${y} Q ${x+barW} ${y} ${x+barW} ${y+r} L ${x+barW} ${y+hB-r} Q ${x+barW} ${y+hB} ${x+barW-r} ${y+hB} L ${x} ${y+hB} Z`;
+
+                        // Etichetta (sx) - Colore Blu Poste Light (#0146bc)
+                        // MODIFICA FONT: Nunito Sans, weight 400
+                        svg += `<text x="${marginLeft - 20}" y="${yCenter + (fontSize * 0.35)}" text-anchor="end" fill="#0146bc" font-family="'Nunito Sans', sans-serif" font-size="${fontSize}" font-weight="400">${d.label.replace(/&/g, '&amp;')}</text>`;
                         
-                        const midA = startA + sliceA/2;
-                        const pct = parseFloat(((d.value/total)*100).toFixed(decimals)).toLocaleString('it-IT',{minimumFractionDigits:0,maximumFractionDigits:decimals})+"%";
-                        labels.push({ 
-                            t: d.label, p: pct, 
-                            y: cy+Math.sin(midA)*r, 
-                            ax: cx+Math.cos(midA)*r, ay: cy+Math.sin(midA)*r, 
-                            isR: (midA > -Math.PI/2 && midA < Math.PI/2) 
-                        });
-                        startA = endA;
+                        // Barra
+                        svg += `<path d="${pathD}" fill="${getThemeColor(i, count)}" />`;
+                        
+                        // Valore % (dx) - Colore Grigio Light (#757575)
+                        // MODIFICA FONT: Nunito Sans, weight 400
+                        let pctString = parseFloat(pctVal.toFixed(decimals)).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: decimals }) + "%";
+                        svg += `<text x="${marginLeft + barW + 15}" y="${yCenter + (fontSize * 0.35)}" text-anchor="start" fill="#757575" font-family="'Nunito Sans', sans-serif" font-size="${fontSize}" font-weight="400">${pctString}</text>`;
                     });
-
-                    const drawSide = (items, xPos, align) => {
-                        if(!items.length) return;
-                        items.sort((a,b) => a.ay - b.ay);
-                        const sp = fontSize * 2.5;
-                        for(let i=0; i<items.length-1; i++) if(items[i+1].y < items[i].y + sp) items[i+1].y = items[i].y + sp;
-                        const last = items[items.length-1], first = items[0];
-                        if(last.y > h-50) items.forEach(l => l.y -= (last.y - (h-50)));
-                        if(first.y < 50) items.forEach(l => l.y += (50 - first.y));
-                        
-                        items.forEach(l => {
-                            const ex = l.isR ? l.ax+40 : l.ax-40;
-                            const tx = align==='start' ? xPos+10 : xPos-10;
-                            
-                            svg += `<path d="M ${l.ax} ${l.ay} L ${ex} ${l.ay} L ${ex} ${l.y} L ${tx} ${l.y}" stroke="#9ca3af" stroke-width="1.5" fill="none"/>`;
-                            
-                            // PPT FIX: Font Arial esplicito su ogni elemento, rimozione alignment-baseline
-                            // La seconda riga viene posizionata calcolando Y manualmente invece di usare 'hanging'
-                            
-                            svg += `<text x="${xPos}" y="${l.y-5}" text-anchor="${align}" fill="#0146bc" font-family="Arial, sans-serif" font-size="${fontSize}" font-weight="bold">${l.t.replace(/&/g, '&amp;')}</text>`;
-                            svg += `<text x="${xPos}" y="${l.y + pctFontSize + 2}" text-anchor="${align}" fill="#002b5c" font-family="Arial, sans-serif" font-size="${pctFontSize}">${l.p}</text>`;
-                        });
-                    };
-
-                    drawSide(labels.filter(l=>l.isR), cx+r+80, 'start');
-                    drawSide(labels.filter(l=>!l.isR), cx-r-80, 'end');
 
                     svg += `</svg>`;
                     
@@ -867,13 +865,11 @@
                     threshold: document.getElementById('chartThreshold'),
                     btnRefresh: document.getElementById('chartRefresh'),
                     btnReset: document.getElementById('chartReset'),
-                    btnShuffle: document.getElementById('chartShuffle')
+                    btnShuffle: document.getElementById('chartShuffle') 
                 };
 
-                // STATO GLOBALE
                 let currentProcessedData = []; 
 
-                // Funzione 1: Prepara i dati (Soglia %, Sort, Altro in fondo)
                 function prepareData() {
                     const thresholdPercent = parseFloat(controls.threshold.value) || 0;
                     const totalTotal = rawData.reduce((acc, curr) => acc + curr.value, 0);
@@ -890,217 +886,136 @@
                         }
                     });
 
-                    // MODIFICA: "Altro" aggiunto PRIMA del sort per svincolare il colore dalla posizione finale
                     if (othersValue > 0) {
                         mainItems.push({ label: 'Altro', value: othersValue, isOther: true });
                     }
 
-                    mainItems.sort((a, b) => b.value - a.value);
+                    const content = mainItems.filter(x => !x.isOther).sort((a, b) => b.value - a.value);
+                    const others = mainItems.filter(x => x.isOther);
+                    currentProcessedData = [...content, ...others];
                     
-                    currentProcessedData = mainItems;
                     drawChart();
                 }
 
-                // Funzione 2: Disegna
                 function drawChart() {
-                    const fontSize = parseInt(controls.fontSize.value) || 24;
-                    const decimals = parseInt(controls.decimals.value); 
-                    
-                    const chartData = currentProcessedData;
-                    const totalVal = chartData.reduce((acc, curr) => acc + curr.value, 0);
+                    const fontSize = parseInt(controls.fontSize.value) || 30;
+                    const decimals = parseInt(controls.decimals.value);
+                    const data = currentProcessedData;
+                    const total = data.reduce((acc, curr) => acc + curr.value, 0);
 
+                    // Reset con ClearRect (Trasparente)
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fillRect(0, 0, canvas.width, canvas.height);
                     
-                    const centerX = canvas.width / 2;
-                    const centerY = canvas.height / 2;
-                    const radius = 300; 
-                    const innerRadius = 190;
-                    const fontFace = "'Nunito Sans', 'Avenir Next LT Pro', 'Helvetica Neue', sans-serif";
-                    
-                    // --- NUOVA LOGICA COLORI: PREVALENZA CHIARI (Simil-Reference) ---
-                    function getColor(index, total) {
-                        // Modifica: Gradient shiftato verso i chiari molto prima per ottenere l'effetto "prevalenza chiara"
-                        const stops = [
-                            { pct: 0.0, color: { r: 0, g: 43, b: 92 } },    // #002b5c (Dark Poste) - Inizio scuro
-                            { pct: 0.15, color: { r: 1, g: 70, b: 188 } },   // #0146bc (Brand Blue) - Transizione rapida al blu
-                            { pct: 0.4, color: { r: 175, g: 210, b: 255 } }, // #afd2ff (Very Light Blue) - Già molto chiaro al 40%
-                            { pct: 1.0, color: { r: 240, g: 248, b: 255 } }  // #f0f8ff (Almost White) - Coda chiarissima dominante
-                        ];
+                    // Layout
+                    const w = canvas.width;
+                    const h = canvas.height;
+                    const marginLeft = 400;
+                    const marginRight = 200;
+                    const marginTop = 50;
+                    const marginBottom = 50;
+                    const chartW = w - marginLeft - marginRight;
+                    const chartH = h - marginTop - marginBottom;
 
-                        if (total <= 1) return `rgb(${stops[0].color.r}, ${stops[0].color.g}, ${stops[0].color.b})`;
+                    let maxPct = 0;
+                    data.forEach(d => {
+                        const val = (d.value / total) * 100;
+                        if(val > maxPct) maxPct = val;
+                    });
+                    const maxScale = maxPct * 1.1; 
 
-                        // Posizione normalizzata (0..1)
-                        const t = index / (total - 1);
-
-                        // Trova i due stop tra cui si trova t
-                        let start = stops[0];
-                        let end = stops[stops.length - 1];
-
-                        for (let i = 0; i < stops.length - 1; i++) {
-                            if (t >= stops[i].pct && t <= stops[i+1].pct) {
-                                start = stops[i];
-                                end = stops[i+1];
-                                break;
-                            }
-                        }
-
-                        // Interpola tra start e end
-                        // Normalizza t nel range locale [0..1]
-                        const range = end.pct - start.pct;
-                        const localT = (t - start.pct) / range;
-
-                        const r = start.color.r + (end.color.r - start.color.r) * localT;
-                        const g = start.color.g + (end.color.g - start.color.g) * localT;
-                        const b = start.color.b + (end.color.b - start.color.b) * localT;
-
-                        return `rgb(${Math.round(r)}, ${Math.round(g)}, ${Math.round(b)})`;
+                    // Grid Lines
+                    ctx.beginPath();
+                    ctx.strokeStyle = "#e5e7eb";
+                    ctx.lineWidth = 2;
+                    const steps = 5;
+                    for(let i = 1; i <= steps; i++) {
+                        const x = marginLeft + (chartW * (i / steps));
+                        ctx.moveTo(x, marginTop);
+                        ctx.lineTo(x, h - marginBottom);
                     }
+                    ctx.stroke();
 
-                    // Disegno Spicchi
-                    let startAngle = -Math.PI / 2;
-                    let labels = [];
+                    // Axis Line
+                    ctx.beginPath();
+                    ctx.strokeStyle = "#9ca3af";
+                    ctx.lineWidth = 2;
+                    ctx.moveTo(marginLeft, marginTop);
+                    ctx.lineTo(marginLeft, h - marginBottom);
+                    ctx.stroke();
 
-                    chartData.forEach((slice, i) => {
-                        const sliceAngle = (slice.value / totalVal) * (2 * Math.PI);
-                        const endAngle = startAngle + sliceAngle;
+                    const fontFace = "'Nunito Sans', 'Segoe UI', sans-serif";
+                    const count = data.length;
+                    const rowHeight = chartH / count;
+                    const barHeight = rowHeight * 0.65; 
+
+                    // Funzione Colore (identica a SVG)
+                    // MODIFICA COLORE: Inizia con il colore del font (Brand Blue #0146bc)
+                    const getThemeColor = (idx, tot) => {
+                         const stops = [
+                            {p:0.0, c:{r:1, g:70, b:188}},   // Brand Blue (#0146bc)
+                            {p:0.4, c:{r:138, g:182, b:249}}, // Light Blue
+                            {p:1.0, c:{r:220, g:238, b:255}}  // Pale
+                         ];
+                         if(tot<=1) return `rgb(${stops[0].c.r},${stops[0].c.g},${stops[0].c.b})`;
+                         const t = idx/(tot-1);
+                         let s=stops[0], e=stops[stops.length-1];
+                         for(let i=0; i<stops.length-1; i++){ if(t>=stops[i].p && t<=stops[i+1].p){ s=stops[i]; e=stops[i+1]; break; } }
+                         const range = e.p - s.p, lt = (t-s.p)/range;
+                         const r = Math.round(s.c.r + (e.c.r-s.c.r)*lt);
+                         const g = Math.round(s.c.g + (e.c.g-s.c.g)*lt);
+                         const b = Math.round(s.c.b + (e.c.b-s.c.b)*lt);
+                         return `rgb(${r},${g},${b})`;
+                    };
+
+                    data.forEach((d, i) => {
+                        const pctVal = (d.value / total) * 100;
+                        const barW = (pctVal / maxScale) * chartW;
+                        const yCenter = marginTop + (i * rowHeight) + (rowHeight / 2);
+                        const yBar = yCenter - (barHeight / 2);
+
+                        // 1. Label a sinistra (Blu Poste Light #0146bc)
+                        // MODIFICA FONT: weight normal (rimosso bold)
+                        ctx.font = `normal ${fontSize}px ${fontFace}`;
+                        ctx.fillStyle = "#0146bc"; 
+                        ctx.textAlign = "right";
+                        ctx.textBaseline = "middle";
+                        ctx.fillText(d.label, marginLeft - 20, yCenter);
+
+                        // 2. Barra (Scala Cromatica)
+                        ctx.fillStyle = getThemeColor(i, count);
                         
-                        ctx.fillStyle = getColor(i, chartData.length);
+                        // Round Rect: 0 a sinistra, 4px a destra
                         ctx.beginPath();
-                        ctx.moveTo(centerX, centerY);
-                        ctx.arc(centerX, centerY, radius, startAngle, endAngle);
-                        ctx.closePath();
+                        if (ctx.roundRect) {
+                            ctx.roundRect(marginLeft, yBar, barW, barHeight, [0, 4, 4, 0]);
+                        } else {
+                            ctx.rect(marginLeft, yBar, barW, barHeight);
+                        }
                         ctx.fill();
-                        
-                        ctx.lineWidth = 4;
-                        ctx.strokeStyle = "#ffffff";
-                        ctx.stroke();
 
-                        const midAngle = startAngle + sliceAngle / 2;
-                        let pctVal = (slice.value / totalVal) * 100;
-                        let pctString = parseFloat(pctVal.toFixed(decimals)).toLocaleString('it-IT', {
+                        // 3. Valore a destra (Grigio Light #757575)
+                        let pctString = parseFloat(pctVal.toFixed(decimals)).toLocaleString('it-IT', { 
                             minimumFractionDigits: 0, 
-                            maximumFractionDigits: decimals
+                            maximumFractionDigits: decimals 
                         }) + "%";
 
-                        labels.push({
-                            text: slice.label,
-                            pct: pctString,
-                            angle: midAngle,
-                            anchorX: centerX + Math.cos(midAngle) * radius,
-                            anchorY: centerY + Math.sin(midAngle) * radius,
-                            isRight: (midAngle > -Math.PI/2 && midAngle < Math.PI/2),
-                            targetY: centerY + Math.sin(midAngle) * radius, 
-                        });
-
-                        startAngle = endAngle;
+                        ctx.fillStyle = "#757575";
+                        ctx.textAlign = "left";
+                        ctx.fillText(pctString, marginLeft + barW + 15, yCenter);
                     });
-
-                    // Foro Centrale
-                    ctx.beginPath();
-                    ctx.arc(centerX, centerY, innerRadius, 0, 2 * Math.PI);
-                    ctx.fillStyle = "#ffffff";
-                    ctx.fill();
-
-                    // Disegno Etichette (Algoritmo No-Overlap)
-                    const labelXRight = centerX + radius + 100; // Aumentato spazio per linea orizzontale
-                    const labelXLeft = centerX - radius - 100; 
-                    
-                    let rightLabels = labels.filter(l => l.isRight);
-                    let leftLabels = labels.filter(l => !l.isRight);
-
-                    function distributeAndDraw(items, xPos, align) {
-                        if (items.length === 0) return;
-                        
-                        // Sort geometrico
-                        items.sort((a, b) => a.anchorY - b.anchorY);
-                        const spacing = fontSize * 2.5; 
-
-                        // Stack
-                        for (let i = 0; i < items.length - 1; i++) {
-                            const current = items[i];
-                            const next = items[i+1];
-                            if (next.targetY < current.targetY + spacing) {
-                                next.targetY = current.targetY + spacing;
-                            }
-                        }
-
-                        // Shift
-                        const bottomLimit = canvas.height - 50;
-                        const topLimit = 50;
-                        const lastItem = items[items.length - 1];
-                        if (lastItem.targetY > bottomLimit) {
-                            const diff = lastItem.targetY - bottomLimit;
-                            items.forEach(item => item.targetY -= diff);
-                        }
-                        const firstItem = items[0];
-                        if (firstItem.targetY < topLimit) {
-                            const diff = topLimit - firstItem.targetY;
-                            items.forEach(item => item.targetY += diff);
-                        }
-
-                        // Draw
-                        items.forEach(l => {
-                            const y = l.targetY;
-                            // Calcolo X del gomito basato sul raggio esterno fisso per allineare le pieghe verticalmente
-                            const breakX = l.isRight ? (centerX + radius + 20) : (centerX - radius - 20);
-
-                            ctx.beginPath();
-                            ctx.lineWidth = 1.5;
-                            ctx.strokeStyle = "#9ca3af";
-                            
-                            // Segmento 1: Obliquo (dal bordo fetta al gomito allineato in altezza)
-                            // Questo crea l'effetto raggiera puntando verso il centro
-                            ctx.moveTo(l.anchorX, l.anchorY);
-                            ctx.lineTo(breakX, y);
-                            
-                            // Segmento 2: Orizzontale (dal gomito al testo)
-                            ctx.lineTo(align === 'left' ? xPos + 10 : xPos - 10, y);
-                            ctx.stroke();
-
-                            ctx.font = `bold ${fontSize}px ${fontFace}`;
-                            ctx.fillStyle = "#0146bc";
-                            ctx.textAlign = align;
-                            ctx.textBaseline = "bottom";
-                            ctx.fillText(l.text, xPos, y - 2);
-                            
-                            ctx.font = `normal ${Math.max(12, fontSize - 4)}px ${fontFace}`;
-                            ctx.fillStyle = "#002b5c";
-                            ctx.textBaseline = "top";
-                            ctx.fillText(l.pct, xPos, y + 2);
-                        });
-                    }
-
-                    distributeAndDraw(rightLabels, labelXRight, 'left');
-                    distributeAndDraw(leftLabels, labelXLeft, 'right');
                 }
 
-                // LISTENERS
+                // LISTENERS UI
                 controls.fontSize.addEventListener('input', drawChart);
                 controls.decimals.addEventListener('input', drawChart);
                 controls.btnRefresh.addEventListener('click', drawChart);
                 controls.threshold.addEventListener('change', prepareData);
 
                 controls.btnReset.addEventListener('click', () => {
-                    controls.fontSize.value = 24;
+                    controls.fontSize.value = 30;
                     controls.decimals.value = 1;
                     controls.threshold.value = 0;
                     prepareData(); 
-                });
-
-                // Tasto Shuffle
-                controls.btnShuffle.addEventListener('click', () => {
-                    let limit = currentProcessedData.length;
-                    if (currentProcessedData.length > 0 && currentProcessedData[currentProcessedData.length-1].isOther) {
-                        limit = currentProcessedData.length - 1; 
-                    }
-                    
-                    for (let i = limit - 1; i > 0; i--) {
-                        const j = Math.floor(Math.random() * (i + 1));
-                        [currentProcessedData[i], currentProcessedData[j]] = [currentProcessedData[j], currentProcessedData[i]];
-                    }
-                    drawChart();
                 });
 
                 setTimeout(prepareData, 100);
