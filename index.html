@@ -15,24 +15,20 @@
 
     <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
-    
     <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+    
+    <!-- LIBRERIE PER ESPORTAZIONE ZIP E SALVATAGGIO FILE -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <style>
-        /*
-         * STILI PERSONALIZZATI
-         * Colori: Giallo (#eddc01) e Blu (#0146bc)
-        */
         :root {
             --brand-blue: #0146bc;
             --brand-yellow: #eddc01;
-            --brand-dark-blue: #002b5c; /* Blu più scuro per testo e accenti */
-            /* I colori dei grafici sono ora hard-coded in JS per compatibilità SVG */
-            --brand-light-grey: #f4f7f6; /* Sfondo pagina */
+            --brand-dark-blue: #002b5c; 
+            --brand-light-grey: #f4f7f6; 
             --brand-text: #333333;
-            /* --- MODIFICA: Colore testo più chiaro --- */
-            /* 1) MODIFICA: Colore testo scurito */
-            --chart-text-grey: #666666; /* Era #B0B0B0 */
+            --chart-text-grey: #666666;
         }
 
         body {
@@ -41,19 +37,17 @@
             color: var(--brand-text);
         }
 
-        /* Stile Header */
         .app-header {
             background-color: var(--brand-blue);
             border-bottom: 4px solid var(--brand-yellow);
         }
 
-        /* Stile Bottoni Principali (Upload/Download) */
         .btn {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            padding: 0.75rem 1.5rem; /* 12px 24px */
-            border-radius: 0.375rem; /* 6px */
+            padding: 0.75rem 1.5rem; 
+            border-radius: 0.375rem; 
             font-weight: 700;
             font-size: 0.9rem;
             text-transform: uppercase;
@@ -61,7 +55,6 @@
             transition: all 0.2s ease-in-out;
             cursor: pointer;
             border: 2px solid transparent;
-            /* Design flat */
             box-shadow: none;
         }
 
@@ -76,11 +69,10 @@
             color: var(--brand-yellow);
         }
         .btn-primary:disabled {
-            background-color: #a0aec0; /* grigio */
+            background-color: #a0aec0;
             cursor: not-allowed;
         }
 
-        /* Bottoni Secondari (Download) */
         .btn-secondary {
             background-color: white;
             color: var(--brand-blue);
@@ -91,28 +83,26 @@
             color: white;
         }
         .btn-secondary:disabled {
-            background-color: #e2e8f0; /* grigio chiaro */
+            background-color: #e2e8f0; 
             border-color: #cbd5e0;
             color: #a0aec0;
             cursor: not-allowed;
         }
         
-        /* Bottone JSON (Nuovo Stile per differenziarlo) */
         .btn-json {
-            background-color: #1e293b; /* slate-800 */
+            background-color: #1e293b; 
             color: var(--brand-yellow);
             border-color: #1e293b;
         }
         .btn-json:hover {
-            background-color: #0f172a; /* slate-900 */
+            background-color: #0f172a; 
             color: white;
         }
 
-        /* Stile Tabs */
         .tab-button {
-            padding: 0.5rem 1.25rem; /* 8px 20px */
+            padding: 0.5rem 1.25rem; 
             font-weight: 700;
-            border-radius: 9999px; /* pill */
+            border-radius: 9999px; 
             transition: all 0.2s ease-in-out;
             border: 2px solid transparent;
             cursor: pointer;
@@ -123,57 +113,51 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
         .tab-button:not(.active) {
-            background-color: #e2e8f0; /* grigio chiaro */
+            background-color: #e2e8f0; 
             color: var(--brand-dark-blue);
         }
         .tab-button:not(.active):hover {
-            background-color: #cbd5e0; /* grigio medio */
+            background-color: #cbd5e0; 
         }
         
-        /* Stile per i grafici per compatibilità SVG */
         .apexcharts-svg {
-            background-color: transparent !important; /* Fix per sfondi SVG */
+            background-color: transparent !important; 
         }
         
-        /* Nasconde l'input file originale */
+        /* DIMENSIONI FISSE PER I WRAPPER DEI GRAFICI */
+        #chart-donut-wrapper {
+            width: 450px !important;
+            height: 380px !important;
+            margin: 0 auto;
+        }
+
+        #chart-bar-wrapper {
+            width: 800px !important;
+            height: 500px !important;
+            margin: 0 auto;
+        }
+
         input[type="file"].hidden-input {
-            width: 0.1px;
-            height: 0.1px;
-            opacity: 0;
-            overflow: hidden;
-            position: absolute;
-            z-index: -1;
+            width: 0.1px; height: 0.1px; opacity: 0; overflow: hidden; position: absolute; z-index: -1;
         }
         
-        /* Animazione di fade-in per i contenuti */
         .content-section {
-            display: none;
-            animation: fadeIn 0.5s ease-in-out;
+            display: none; animation: fadeIn 0.5s ease-in-out;
         }
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .content-section.visible {
-            display: block;
-        }
+        .content-section.visible { display: block; }
         
-        /* Stili Tabella Dati */
-        .data-table thead th {
-            position: sticky;
-            top: 0;
-            z-index: 10;
-        }
-
+        .data-table thead th { position: sticky; top: 0; z-index: 10; }
     </style>
 </head>
 <body class="antialiased">
 
     <header class="app-header py-5 shadow-lg">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h1 class="text-3xl font-bold text-white tracking-wide">
-                Analizzatore Report Community
-            </h1>
+            <h1 class="text-3xl font-bold text-white tracking-wide">Analizzatore Report Community</h1>
             <p class="text-lg text-gray-200">Carica un file Excel per generare i grafici</p>
         </div>
     </header>
@@ -184,7 +168,6 @@
             <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
                 1. Carica il tuo file Excel
             </h2>
-            
             <div class="flex flex-col sm:flex-row sm:items-center gap-4">
                 <label for="fileInput" id="uploadButtonLabel" class="btn btn-primary">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
@@ -192,12 +175,9 @@
                     </svg>
                     <span id="uploadButtonText">Seleziona file Excel</span>
                 </label>
-                
                 <input type="file" id="fileInput" accept=".xlsx, .xls" class="hidden-input">
-                
                 <span id="fileName" class="text-gray-600 font-medium italic">Nessun file selezionato.</span>
             </div>
-
             <div id="errorMessage" class="hidden mt-4 bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md" role="alert">
                 <p class="font-bold">Errore</p>
                 <p id="errorText">Si è verificato un problema.</p>
@@ -205,23 +185,17 @@
         </section>
 
         <section id="summarySection" class="content-section bg-white rounded-lg shadow-lg p-6 md:p-8">
-            <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
-                Commenti Complessivi
-            </h2>
-            
+            <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">Commenti Complessivi</h2>
             <div class="bg-gray-100 p-6 rounded-lg shadow-inner mb-6">
                 <h3 class="text-xl font-semibold mb-4 text-brand-dark-blue">Dettaglio commenti per canali social</h3>
-                <div id="comments-by-channel-list" class="space-y-3">
-                    </div>
+                <div id="comments-by-channel-list" class="space-y-3"></div>
                 <hr class="my-4">
                 <div class="flex justify-between items-center p-3 bg-gray-200 rounded-lg">
                     <span class="font-bold text-gray-800 text-lg">TOTALE:</span>
                     <div class="flex items-center justify-center gap-2 mt-1">
                         <p id="comments-by-channel-total" class="text-3xl font-bold text-brand-dark-blue">0</p>
                         <button id="copySummaryChannelTotal" title="Copia valore" class="copy-summary-btn text-gray-400 hover:text-brand-blue transition-colors duration-150 p-1 rounded-full">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" /></svg>
                         </button>
                     </div>
                 </div>
@@ -229,143 +203,110 @@
 
             <div class="bg-gray-100 p-6 rounded-lg shadow-inner">
                 <h3 class="text-xl font-semibold mb-4 text-brand-dark-blue">Dettaglio Facebook</h3>
-                
                 <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 text-center">
-                    
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Poste Italiane</h4>
                         <div class="flex items-center justify-center gap-2 mt-1">
                             <p id="summaryPI" class="text-3xl font-bold text-brand-dark-blue">-</p>
                             <button id="copySummaryPI" title="Copia valore" class="copy-summary-btn text-gray-400 hover:text-brand-blue transition-colors duration-150 p-1 rounded-full">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" /></svg>
                             </button>
                         </div>
                     </div>
-                    
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">Postepay</h4>
                         <div class="flex items-center justify-center gap-2 mt-1">
                             <p id="summaryPP" class="text-3xl font-bold text-brand-dark-blue">-</p>
                             <button id="copySummaryPP" title="Copia valore" class="copy-summary-btn text-gray-400 hover:text-brand-blue transition-colors duration-150 p-1 rounded-full">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" /></svg>
                             </button>
                         </div>
                     </div>
-                    
                     <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
                         <h4 class="text-sm font-semibold text-gray-500 uppercase tracking-wider">PosteMobile</h4>
                         <div class="flex items-center justify-center gap-2 mt-1">
                             <p id="summaryPM" class="text-3xl font-bold text-brand-dark-blue">-</p>
                             <button id="copySummaryPM" title="Copia valore" class="copy-summary-btn text-gray-400 hover:text-brand-blue transition-colors duration-150 p-1 rounded-full">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" /></svg>
                             </button>
                         </div>
                     </div>
-                    
                     <div class="bg-brand-yellow p-4 rounded-lg">
                         <h4 class="text-sm font-bold text-brand-dark-blue uppercase tracking-wider">TOTALE</h4>
                         <div class="flex items-center justify-center gap-2 mt-1">
                             <p id="summaryOverall" class="text-3xl font-bold text-brand-dark-blue">-</p>
                             <button id="copySummaryOverall" title="Copia valore" class="copy-summary-btn text-brand-dark-blue hover:text-brand-blue/70 transition-colors duration-150 p-1 rounded-full">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5">
-                                    <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" /></svg>
                             </button>
                         </div>
                     </div>
-                    
                 </div>
             </div>
         </section>
+        
         <section id="controls" class="content-section bg-white rounded-lg shadow-lg p-6 md:p-8">
-            <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
-                2. Seleziona la Pagina
-            </h2>
-            <div id="tabsContainer" class="flex flex-wrap gap-3">
-                </div>
+            <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">2. Seleziona la Pagina</h2>
+            <div id="tabsContainer" class="flex flex-wrap gap-3"></div>
         </section>
 
         <section id="chartsContainerWrapper" class="content-section bg-white rounded-lg shadow-lg p-6 md:p-8">
-            <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
-                3. Visualizza i Grafici
-            </h2>
-            
+            <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">3. Visualizza i Grafici</h2>
             <div id="chartsContainer" class="space-y-16">
-                
                 <div>
-                    <h3 id="bar-chart-title" class="text-xl font-semibold text-brand-dark-blue mb-3 text-center"></h3>
-                    <div class="mx-auto" style="width: 90%; max-width: 800px;">
-                         <div id="chart-bar-wrapper">
-                             <div id="chart-bar"></div>
-                         </div>
+                    <!-- Nascosto, nessun titolo aggiunto all'export -->
+                    <h3 id="bar-chart-title" class="hidden"></h3>
+                    <div class="mx-auto" style="width: 100%; max-width: 800px;">
+                         <div id="chart-bar-wrapper"><div id="chart-bar"></div></div>
                     </div>
                 </div>
-                
                 <div>
-                    <h3 id="donut-chart-title" class="text-xl font-semibold text-brand-dark-blue mb-1 text-center"></h3>
+                    <!-- Nascosto per l'export HTML -->
+                    <h3 id="donut-chart-title" class="hidden"></h3>
+                    
+                    <!-- DEBUG PALLINO -->
+                    <div id="debug-marker-container" class="hidden mb-4 p-4 bg-yellow-100 border border-yellow-400 rounded-lg text-center mx-auto" style="max-width: 450px;">
+                        <label for="debugMarkerOffsetY" class="font-bold text-sm text-brand-dark-blue block mb-2">
+                            Calibrazione verticale pallino: <span id="debugMarkerValue" class="text-brand-blue text-lg">5</span> px
+                        </label>
+                        <input type="range" id="debugMarkerOffsetY" min="-10" max="20" step="1" value="5" class="w-full cursor-pointer accent-brand-blue">
+                        <p class="text-xs text-gray-700 mt-2 font-medium">1. Regola il cursore<br>2. Scarica il PNG per verificare l'effetto finale<br>3. Annota il numero perfetto</p>
+                    </div>
+
                     <div class="mx-auto" style="width: 100%; max-width: 450px;">
-                         <div id="chart-donut-wrapper">
-                             <div id="chart-donut"></div>
-                         </div>
+                         <div id="chart-donut-wrapper"><div id="chart-donut"></div></div>
                     </div>
                 </div>
-                
             </div>
         </section>
 
         <section id="tableContainerWrapper" class="content-section bg-white rounded-lg shadow-lg p-6 md:p-8">
             <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-5 pb-3 border-b border-gray-200">
-                <h2 id="tableTitle" class="text-2xl font-bold text-brand-dark-blue">
-                    Dettaglio Argomenti
-                </h2>
+                <h2 id="tableTitle" class="text-2xl font-bold text-brand-dark-blue">Dettaglio Argomenti</h2>
                 <button id="copyTableButton" class="btn btn-secondary mt-3 sm:mt-0">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
-                    </svg>
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" /></svg>
                     <span class="btn-text">Copia Tabella</span>
                 </button>
             </div>
-            
             <div class="overflow-y-auto max-h-[600px] border border-gray-200 rounded-lg">
-                <div id="tableContainer">
-                    </div>
+                <div id="tableContainer"></div>
             </div>
         </section>
 
-
         <section id="downloadButtons" class="content-section bg-white rounded-lg shadow-lg p-6 md:p-8">
-             <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">
-                4. Esporta Grafici
-            </h2>
-            <div class="flex flex-wrap gap-4">
-                <button id="downloadBarBtn" class="btn btn-secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                    </svg>
-                    <span class="btn-text">Scarica Grafico a Barre (PNG)</span>
+             <h2 class="text-2xl font-bold text-brand-dark-blue mb-5 pb-3 border-b border-gray-200">4. Esporta Grafici</h2>
+            <div class="flex flex-wrap gap-4 mb-6">
+                <!-- BOTTONI SINGOLI (SVG Torta rimosso) -->
+                <button id="downloadBarPngBtn" class="btn btn-secondary text-sm">PNG Barre</button>
+                <button id="downloadBarSvgBtn" class="btn btn-secondary text-sm">SVG Barre</button>
+                <button id="downloadDonutPngBtn" class="btn btn-secondary text-sm">PNG Torta</button>
+                <button id="downloadJsonBtn" class="btn btn-json text-sm">Executive Summary (JSON)</button>
+            </div>
+            <!-- TASTO MASTER SCARICA TUTTO -->
+            <div class="border-t border-gray-200 pt-6">
+                <button id="downloadAllBtn" class="btn btn-primary w-full sm:w-auto text-lg shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-6 h-6 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" /></svg>
+                    <span class="btn-text">Scarica Tutti i File (.zip)</span>
                 </button>
-                
-                <button id="downloadDonutBtn" class="btn btn-secondary">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" />
-                    </svg>
-                    <span class="btn-text">Scarica Grafico a Torta (PNG)</span>
-                </button>
-
-                <!-- NUOVO TASTO EXECUTIVE SUMMARY -->
-                <button id="downloadJsonBtn" class="btn btn-json">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
-                         <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                    </svg>
-                    <span class="btn-text">Executive Summary</span>
-                </button>
-                
             </div>
         </section>
 
@@ -374,7 +315,6 @@
 <script>
         document.addEventListener('DOMContentLoaded', () => {
 
-            // --- Selettori DOM ---
             const fileInput = document.getElementById('fileInput');
             const fileName = document.getElementById('fileName');
             const uploadButtonLabel = document.getElementById('uploadButtonLabel');
@@ -382,90 +322,60 @@
             
             const controlsSection = document.getElementById('controls');
             const tabsContainer = document.getElementById('tabsContainer');
-            
-            // Sezioni Contenuto
             const chartsSection = document.getElementById('chartsContainerWrapper');
             const downloadSection = document.getElementById('downloadButtons');
             const tableSection = document.getElementById('tableContainerWrapper'); 
             const tableContainer = document.getElementById('tableContainer'); 
-            const tableTitle = document.getElementById('tableTitle'); 
             const copyTableButton = document.getElementById('copyTableButton'); 
 
-            // Selettori per i titoli HTML
-            const barChartTitle = document.getElementById('bar-chart-title');
-            const donutChartTitle = document.getElementById('donut-chart-title');
+            const downloadBarPngBtn = document.getElementById('downloadBarPngBtn');
+            const downloadBarSvgBtn = document.getElementById('downloadBarSvgBtn');
+            const downloadDonutPngBtn = document.getElementById('downloadDonutPngBtn');
+            const downloadJsonBtn = document.getElementById('downloadJsonBtn');
+            const downloadAllBtn = document.getElementById('downloadAllBtn');
             
-            // 3. SELETTORI BOTTONI MODIFICATI
-            const downloadBarBtn = document.getElementById('downloadBarBtn');
-            const downloadDonutBtn = document.getElementById('downloadDonutBtn');
-            const downloadJsonBtn = document.getElementById('downloadJsonBtn'); // NUOVO
-            
-            // Errori
             const errorMessage = document.getElementById('errorMessage');
             const errorText = document.getElementById('errorText');
 
-            // --- INIZIO MODIFICA 1: Aggiunti selettori per Summary ---
             const summarySection = document.getElementById('summarySection');
             const summaryPI = document.getElementById('summaryPI');
             const summaryPP = document.getElementById('summaryPP');
             const summaryPM = document.getElementById('summaryPM');
             const summaryOverall = document.getElementById('summaryOverall');
-            // --- FINE MODIFICA 1 ---
 
-            // --- Stato Applicazione ---
             let workbook = null;
-            let charts = {
-                bar: null,
-                donut: null 
-            };
+            let charts = { bar: null, donut: null };
             let currentSheetName = null; 
             
-            // *** MODIFICA: Aggiunto "Number of comments" per il pre-parsing ***
-            const targetSheets = [
-                "Community Poste Italiane",
-                "Community Postepay",
-                "Community PosteMobile",
-                "Temi trattati Poste Italiane FB"
-                // "Number of comments" non è una tab, viene letto solo per la summary
-            ];
-            
-            // Colori hard-coded per compatibilità SVG e come da richiesta
-            const chartColors = {
-                user: '#c2d6fb',      // Azzurro/Grigio richiesto (Utenti)
-                moderator: '#0146bc', // Blu scuro (Moderatori)
-                /* 1) MODIFICA: Colore testo scurito */
-                text: '#666666',      // Era #B0B0B0
-                title: '#002b5c' 
-            };
-
-            // --- Gestione Eventi ---
+            const targetSheets = ["Community Poste Italiane", "Community Postepay", "Community PosteMobile", "Temi trattati Poste Italiane FB"];
+            const chartColors = { user: '#c2d6fb', moderator: '#0146bc', text: '#666666', title: '#002b5c' };
 
             fileInput.addEventListener('change', handleFile);
             
-            // 3. LISTENER EVENTI MODIFICATI
-            downloadBarBtn.addEventListener('click', () => downloadPNG('chart-bar-wrapper', 'grafico_barre.png', downloadBarBtn));
-            
-            // --- MODIFICA 1: Aggiunto il parametro '112' per il crop ---
-            downloadDonutBtn.addEventListener('click', () => downloadPNG('chart-donut-wrapper', 'grafico_torta.png', downloadDonutBtn, 112));
-            
-            // NUOVO LISTENER PER JSON
-            downloadJsonBtn.addEventListener('click', handleExportExecutiveSummary);
-
+            downloadBarPngBtn.addEventListener('click', () => downloadPNG('chart-bar-wrapper', 'Barre.png', downloadBarPngBtn));
+            downloadDonutPngBtn.addEventListener('click', () => downloadPNG('chart-donut-wrapper', 'Torta.png', downloadDonutPngBtn));
+            downloadBarSvgBtn.addEventListener('click', () => downloadApexSVG('chart-bar', 'Barre.svg'));
+            downloadJsonBtn.addEventListener('click', () => handleExportExecutiveSummary(false));
+            downloadAllBtn.addEventListener('click', downloadAllFilesZip);
             copyTableButton.addEventListener('click', () => copyTableToClipboard('dataTable', copyTableButton)); 
 
-            // 1) ELIMINATO: Event listener per lo slider del font
-
-            // --- INIZIO MODIFICA (JS) 1: Listener per icone copia summary ---
             document.getElementById('copySummaryPI').addEventListener('click', (e) => copySummaryValue('summaryPI', e.currentTarget));
             document.getElementById('copySummaryPP').addEventListener('click', (e) => copySummaryValue('summaryPP', e.currentTarget));
             document.getElementById('copySummaryPM').addEventListener('click', (e) => copySummaryValue('summaryPM', e.currentTarget));
             document.getElementById('copySummaryOverall').addEventListener('click', (e) => copySummaryValue('summaryOverall', e.currentTarget));
-            // *** NUOVO: Listener per il totale dei canali social ***
             document.getElementById('copySummaryChannelTotal').addEventListener('click', (e) => copySummaryValue('comments-by-channel-total', e.currentTarget));
-            // --- FINE MODIFICA (JS) 1 ---
 
-
-            // --- Funzioni Principali ---
+            // --- LISTENER DEBUG PALLINO ---
+            const debugMarkerOffsetY = document.getElementById('debugMarkerOffsetY');
+            const debugMarkerValue = document.getElementById('debugMarkerValue');
+            
+            debugMarkerOffsetY.addEventListener('input', (e) => {
+                const val = parseInt(e.target.value, 10);
+                debugMarkerValue.textContent = val;
+                if (charts.donut) {
+                    charts.donut.updateOptions({ legend: { markers: { offsetY: val } } });
+                }
+            });
 
             async function handleFile(event) {
                 const file = event.target.files[0];
@@ -479,18 +389,12 @@
                 try {
                     const data = await file.arrayBuffer();
                     workbook = XLSX.read(data, { type: 'array' });
-                    
                     setButtonDone(uploadButtonLabel, uploadButtonText, "File Caricato!", "Seleziona file Excel");
-                    
-                    // --- INIZIO MODIFICA 2: Chiamata alla funzione Summary ---
                     calculateAndDisplaySummary(workbook);
-                    // --- FINE MODIFICA 2 ---
-                    
                     setupTabs(workbook);
                     showSection(controlsSection);
-
                 } catch (err) {
-                    console.error("Errore during la lettura del file:", err);
+                    console.error(err);
                     showError("Impossibile leggere il file. Assicurati che sia un file Excel valido.");
                     setButtonError(uploadButtonLabel, uploadButtonText, "Errore! Riprova", "Seleziona file Excel");
                     fileName.textContent = "Nessun file selezionato.";
@@ -500,125 +404,83 @@
             function setupTabs(wb) {
                 tabsContainer.innerHTML = ''; 
                 let foundSheets = 0;
-
                 targetSheets.forEach(sheetName => {
                     if (wb.SheetNames.includes(sheetName)) {
                         foundSheets++;
                         const tabButton = document.createElement('button');
                         tabButton.className = 'tab-button';
                         tabButton.textContent = sheetName;
-                        
-                        // Logica per mostrare grafici O tabella
                         tabButton.addEventListener('click', () => {
                             tabsContainer.querySelectorAll('.tab-button').forEach(btn => btn.classList.remove('active'));
                             tabButton.classList.add('active');
-                            
                             currentSheetName = sheetName; 
 
                             if (sheetName.startsWith("Community")) {
                                 showSection(chartsSection);
                                 showSection(downloadSection);
-                                hideSection(tableSection); // Nasconde la tabella
+                                hideSection(tableSection);
                                 processSheet(wb.Sheets[sheetName], sheetName);
                             } else if (sheetName.startsWith("Temi trattati")) {
                                 hideSection(chartsSection);
                                 hideSection(downloadSection);
-                                showSection(tableSection); // Mostra la tabella
+                                showSection(tableSection); 
                                 processTableSheet(wb.Sheets[sheetName], sheetName);
                             }
                         });
-                        
                         tabsContainer.appendChild(tabButton);
                     }
                 });
-
-                if (foundSheets === 0) {
-                    showError(`Nessuno dei fogli richiesti (es. "${targetSheets[0]}") è stato trovato nel file.`);
-                } else {
-                    tabsContainer.querySelector('.tab-button')?.click();
-                }
+                if (foundSheets === 0) showError("Nessun foglio trovato.");
+                else tabsContainer.querySelector('.tab-button')?.click();
             }
 
-
             function processSheet(ws, sheetName) {
-                const json = XLSX.utils.sheet_to_json(ws, { 
-                    range: "A15:E45", 
-                    header: ["A", "B", "C", "D", "E"],
-                    cellDates: true 
-                });
-
-                let categories = [];
-                let seriesUser = [];
-                let seriesModerator = [];
-                let totalUser = 0;
-                let totalModerator = 0;
+                const json = XLSX.utils.sheet_to_json(ws, { range: "A15:E45", header: ["A", "B", "C", "D", "E"], cellDates: true });
+                let categories = [], seriesUser = [], seriesModerator = [], totalUser = 0, totalModerator = 0;
                 
                 for (let i = 0; i < json.length; i++) {
                     const row = json[i];
                     const dateValue = row['A']; 
-                    
-                    if (!dateValue) {
-                        break; 
-                    }
+                    if (!dateValue) break; 
 
                     let jsDate;
-                    if (dateValue instanceof Date) {
-                        jsDate = dateValue;
-                    } else if (typeof dateValue === 'string') {
-                        jsDate = new Date(dateValue); 
-                    } else if (typeof dateValue === 'number') {
-                        // Converte il numero seriale di Excel
+                    if (dateValue instanceof Date) jsDate = dateValue;
+                    else if (typeof dateValue === 'string') jsDate = new Date(dateValue); 
+                    else if (typeof dateValue === 'number') {
                         const excelEpoch = new Date(1899, 11, 30);
                         jsDate = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
                     }
-
-                    if (!jsDate || isNaN(jsDate.getTime())) {
-                        console.warn("Riga saltata a causa di data non valida:", dateValue);
-                        continue; 
-                    }
+                    if (!jsDate || isNaN(jsDate.getTime())) continue; 
                     
                     const formattedDate = jsDate.toLocaleDateString('it-IT', { day: '2-digit', month: '2-digit' });
-                    
                     const incoming = parseInt(row['D'], 10) || 0; 
                     const outgoing = parseInt(row['E'], 10) || 0; 
 
                     categories.push(formattedDate);
                     seriesUser.push(incoming);
                     seriesModerator.push(outgoing);
-                    
                     totalUser += incoming;
                     totalModerator += outgoing;
                 }
                 
-                // --- Creazione Grafico a Barre ---
-                const barSeries = [
-                    { name: 'Attività Utenti', data: seriesUser },
-                    { name: 'Attività Moderatori', data: seriesModerator }
-                ];
-                
-                barChartTitle.textContent = `Volumi Giornalieri: ${sheetName}`;
-                charts.bar = createBarChart('chart-bar', barSeries, categories);
-                
-                // --- Creazione Grafico Donut ---
+                const barSeries = [{ name: 'Attività Utenti', data: seriesUser }, { name: 'Attività Moderatori', data: seriesModerator }];
                 const donutSeries = [totalUser, totalModerator];
-                // L'ordine delle etichette deve corrispondere ai colori (Utenti=user, Moderatori=moderator)
                 const donutLabels = ['Utenti', 'Moderatori Poste']; 
-                
-                donutChartTitle.textContent = `Riepilogo Totale: ${sheetName}`;
-                charts.donut = createDonutChart('chart-donut', donutSeries, donutLabels);
 
+                // Nascondiamo i titoli dalla vista e rimuoviamo quelli nativi
+                document.getElementById('bar-chart-title').style.display = 'none';
+                document.getElementById('donut-chart-title').style.display = 'none';
+                
+                // Mostra il box di debug del pallino
+                document.getElementById('debug-marker-container').classList.remove('hidden');
+
+                charts.bar = createBarChart('chart-bar', barSeries, categories);
+                charts.donut = createDonutChart('chart-donut', donutSeries, donutLabels);
             }
             
-            // Funzione per processare la tabella Argomenti + Grafico Anello Custom
             function processTableSheet(ws, sheetName) {
-                // 1. Lettura Dati
-                const json = XLSX.utils.sheet_to_json(ws, { 
-                    range: "A15:B50", 
-                    header: ["Argomento", "Valore"],
-                });
-
-                let rawData = [];
-                let tableTotal = 0;
+                const json = XLSX.utils.sheet_to_json(ws, { range: "A15:B50", header: ["Argomento", "Valore"] });
+                let rawData = [], tableTotal = 0;
 
                 json.forEach(row => {
                     const argomento = row['Argomento'];
@@ -629,33 +491,23 @@
                     }
                 });
 
-                // 2. Ricostruzione DOM Wrapper per Accordion e Grafico
                 const wrapper = document.getElementById('tableContainerWrapper');
-                // Canvas impostato a 1600x1100 per ratio 16:11
                 wrapper.innerHTML = `
                     <div class="flex flex-col sm:flex-row justify-between sm:items-center mb-5 pb-3 border-b border-gray-200">
-                        <h2 class="text-2xl font-bold text-brand-dark-blue">
-                            Dettaglio Argomenti: ${sheetName}
-                        </h2>
+                        <h2 class="text-2xl font-bold text-brand-dark-blue">Dettaglio Argomenti: ${sheetName}</h2>
                         <button id="copyTableButton" class="btn btn-secondary mt-3 sm:mt-0">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2">
-                                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" />
-                            </svg>
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" /></svg>
                             <span class="btn-text">Copia Tabella</span>
                         </button>
                     </div>
-
                     <details class="group bg-gray-50 rounded-lg border border-gray-200 shadow-sm mb-12 overflow-hidden">
                         <summary class="flex items-center justify-between cursor-pointer p-4 bg-white hover:bg-gray-50 transition-colors">
                             <h3 class="font-bold text-brand-blue flex items-center gap-2 select-none">
-                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform group-open:rotate-180 transition-transform text-brand-yellow" viewBox="0 0 20 20" fill="currentColor">
-                                    <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
-                                </svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 transform group-open:rotate-180 transition-transform text-brand-yellow" viewBox="0 0 20 20" fill="currentColor"><path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" /></svg>
                                 Mostra Tabella Dati
                             </h3>
                             <span class="text-sm text-gray-400">Clicca per espandere</span>
                         </summary>
-                        
                         <div class="p-6 border-t border-gray-200">
                             <div class="overflow-y-auto max-h-[400px] border border-gray-200 rounded-lg">
                                 <table id="dataTable" class="w-full text-left border-collapse">
@@ -681,130 +533,78 @@
                             </div>
                         </div>
                     </details>
-
                     <div class="bg-white rounded-lg p-2">
-                        <h3 class="text-xl font-bold text-brand-dark-blue mb-6 text-center">Ripartizione Tematiche</h3>
-                        
                         <div class="bg-gray-100 p-4 rounded-lg mb-6 flex flex-wrap gap-6 items-end justify-center border border-gray-200">
-                            
                             <div class="flex flex-col gap-1">
                                 <label class="text-xs font-bold text-gray-500 uppercase">Dimensione Font</label>
                                 <input type="range" id="chartFontSize" min="16" max="40" value="30" class="w-32 h-2 bg-gray-300 rounded-lg appearance-none cursor-pointer accent-brand-blue">
                             </div>
-
                             <div class="flex flex-col gap-1 w-24">
                                 <label class="text-xs font-bold text-gray-500 uppercase">Decimali</label>
-                                <input type="number" id="chartDecimals" min="0" max="2" value="1" class="p-1 border border-gray-300 rounded text-center font-bold text-brand-dark-blue focus:ring-2 focus:ring-brand-yellow outline-none">
+                                <input type="number" id="chartDecimals" min="0" max="2" value="1" class="p-1 border border-gray-300 rounded text-center font-bold text-brand-dark-blue outline-none">
                             </div>
-
                             <div class="flex flex-col gap-1 w-32">
                                 <label class="text-xs font-bold text-gray-500 uppercase" title="Accorpa voci sotto questa percentuale">Soglia 'Varie'</label>
-                                <input type="number" id="chartThreshold" min="0" max="100" step="0.5" value="0" class="p-1 border border-gray-300 rounded text-center font-bold text-brand-dark-blue focus:ring-2 focus:ring-brand-yellow outline-none" placeholder="% min">
+                                <input type="number" id="chartThreshold" min="0" max="100" step="0.5" value="0" class="p-1 border border-gray-300 rounded text-center font-bold text-brand-dark-blue outline-none" placeholder="% min">
                             </div>
-
                             <div class="flex gap-2 pb-0.5">
-                                <button id="chartShuffle" class="hidden"></button> <button id="chartRefresh" class="bg-brand-blue text-white hover:bg-brand-dark-blue px-4 py-1.5 rounded font-bold text-sm transition-colors shadow-sm">Aggiorna</button>
-                                <button id="chartReset" class="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 px-4 py-1.5 rounded font-bold text-sm transition-colors shadow-sm">Reset</button>
+                                <button id="chartShuffle" class="hidden"></button> <button id="chartRefresh" class="bg-brand-blue text-white hover:bg-brand-dark-blue px-4 py-1.5 rounded font-bold text-sm shadow-sm">Aggiorna</button>
+                                <button id="chartReset" class="bg-white border border-gray-300 text-gray-600 hover:bg-gray-50 px-4 py-1.5 rounded font-bold text-sm shadow-sm">Reset</button>
                             </div>
                         </div>
-
                         <div class="relative w-full overflow-x-auto flex justify-center pb-4">
-                            <canvas id="temiChartCanvas" width="1600" height="1100" style="width: 100%; max-width: 1000px; height: auto; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 8px;"></canvas>
+                            <canvas id="temiChartCanvas" width="1600" height="1100" style="width: 100%; max-width: 1000px; height: auto; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border-radius: 8px;"></canvas>
                         </div>
-                        
                         <div class="text-center mt-4 flex justify-center gap-3">
-                             <button id="btnDownloadTemiChart" class="btn btn-secondary text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3" /></svg>
-                                Scarica PNG
-                            </button>
-                            <button id="btnDownloadTemiSvg" class="btn btn-secondary text-sm">
-                                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4 mr-2"><path stroke-linecap="round" stroke-linejoin="round" d="M9.53 16.122a3 3 0 00-5.78 1.128 2.25 2.25 0 01-2.4 2.245 4.5 4.5 0 008.4-2.245c0-.399-.078-.78-.22-1.128zm0 0a15.998 15.998 0 003.388-1.62m-5.043-.025a15.994 15.994 0 011.622-3.395m3.42 3.42a15.995 15.995 0 004.764-4.648l3.876-5.814a1.151 1.151 0 00-1.597-1.597L14.146 6.32a15.996 15.996 0 00-4.649 4.763m3.42 3.42a6.776 6.776 0 00-3.42-3.42" /></svg>
-                                Scarica SVG
-                            </button>
+                             <button id="btnDownloadTemiChart" class="btn btn-secondary text-sm">Scarica PNG</button>
+                             <button id="btnDownloadTemiSvg" class="btn btn-secondary text-sm">Scarica SVG</button>
                         </div>
                     </div>
                 `;
 
-                // 3. Gestione Eventi (Copia Tabella)
                 document.getElementById('copyTableButton').addEventListener('click', function() {
-                    const btn = this;
-                    const btnTextEl = btn.querySelector('.btn-text');
-                    const originalText = btnTextEl.textContent;
+                    const btn = this; const btnTextEl = btn.querySelector('.btn-text'); const originalText = btnTextEl.textContent;
                     setButtonLoading(btn, btnTextEl, "Copia in corso...");
                     try {
                         let tsv = "Argomento\tValore\n";
                         rawData.forEach(row => { tsv += `${row.label}\t${row.value.toLocaleString('it-IT')}\n`; });
                         tsv += `TOTALE\t${tableTotal.toLocaleString('it-IT')}`;
-                        const textArea = document.createElement('textarea');
-                        textArea.value = tsv;
-                        textArea.style.position = 'absolute';
-                        textArea.style.left = '-9999px';
-                        document.body.appendChild(textArea);
-                        textArea.select();
-                        document.execCommand('copy');
-                        document.body.removeChild(textArea);
+                        const textArea = document.createElement('textarea'); textArea.value = tsv; textArea.style.position = 'absolute'; textArea.style.left = '-9999px';
+                        document.body.appendChild(textArea); textArea.select(); document.execCommand('copy'); document.body.removeChild(textArea);
                         setButtonDone(btn, btnTextEl, "Copiato!", originalText);
-                    } catch (err) {
-                        console.error("Errore copia:", err);
-                        setButtonError(btn, btnTextEl, "Errore", originalText);
-                    }
+                    } catch (err) { setButtonError(btn, btnTextEl, "Errore", originalText); }
                 });
 
                 document.getElementById('btnDownloadTemiChart').addEventListener('click', async function() {
                     const canvas = document.getElementById('temiChartCanvas');
                     const link = document.createElement('a');
-                    link.download = `Temi_Poste_${new Date().toISOString().slice(0,10)}.png`;
-                    link.href = canvas.toDataURL('image/png');
-                    link.click();
+                    link.download = `Temi_${new Date().toISOString().slice(0,10)}.png`;
+                    link.href = canvas.toDataURL('image/png'); link.click();
                 });
 
-                // EXPORT SVG REIMPLEMENTATO CON TRASPARENZA E STILE RICHIESTO
                 document.getElementById('btnDownloadTemiSvg').addEventListener('click', function() {
-                    const w = 1600, h = 1100;
-                    const data = currentProcessedData;
-                    const total = data.reduce((a, b) => a + b.value, 0);
-                    const fontSize = parseInt(controls.fontSize.value) || 30;
-                    const decimals = parseInt(controls.decimals.value);
-                    
-                    // Layout
-                    const marginLeft = 400;  
-                    const marginRight = 200; 
-                    const marginTop = 50;
-                    const marginBottom = 50;
-                    const chartW = w - marginLeft - marginRight;
-                    const chartH = h - marginTop - marginBottom;
-                    
-                    let maxPct = 0;
-                    data.forEach(d => {
-                        const val = (d.value / total) * 100;
-                        if(val > maxPct) maxPct = val;
-                    });
+                    const w = 1600, h = 1100, data = currentProcessedData, total = data.reduce((a, b) => a + b.value, 0);
+                    const fontSize = parseInt(controls.fontSize.value) || 30, decimals = parseInt(controls.decimals.value);
+                    const marginLeft = 400, marginRight = 200, marginTop = 80, marginBottom = 50; 
+                    const chartW = w - marginLeft - marginRight, chartH = h - marginTop - marginBottom;
+                    let maxPct = 0; data.forEach(d => { const val = (d.value / total) * 100; if(val > maxPct) maxPct = val; });
                     const maxScale = maxPct * 1.1;
 
-                    // Funzione gradiente tema chiaro (restituisce colore esadecimale per SVG)
-                    // MODIFICA COLORE: Inizia con il colore del font (Brand Blue #0146bc)
                     const getThemeColor = (idx, tot) => {
-                         const stops = [
-                            {p:0.0, c:{r:1, g:70, b:188}},   // Brand Blue (#0146bc)
-                            {p:0.4, c:{r:138, g:182, b:249}}, // Light Blue
-                            {p:1.0, c:{r:220, g:238, b:255}}  // Pale
-                         ];
+                         const stops = [{p:0.0, c:{r:1, g:70, b:188}}, {p:0.4, c:{r:138, g:182, b:249}}, {p:1.0, c:{r:220, g:238, b:255}}];
                          if(tot<=1) return `rgb(${stops[0].c.r},${stops[0].c.g},${stops[0].c.b})`;
-                         const t = idx/(tot-1);
-                         let s=stops[0], e=stops[stops.length-1];
+                         const t = idx/(tot-1); let s=stops[0], e=stops[stops.length-1];
                          for(let i=0; i<stops.length-1; i++){ if(t>=stops[i].p && t<=stops[i+1].p){ s=stops[i]; e=stops[i+1]; break; } }
                          const range = e.p - s.p, lt = (t-s.p)/range;
-                         const r = Math.round(s.c.r + (e.c.r-s.c.r)*lt);
-                         const g = Math.round(s.c.g + (e.c.g-s.c.g)*lt);
-                         const b = Math.round(s.c.b + (e.c.b-s.c.b)*lt);
+                         const r = Math.round(s.c.r + (e.c.r-s.c.r)*lt), g = Math.round(s.c.g + (e.c.g-s.c.g)*lt), b = Math.round(s.c.b + (e.c.b-s.c.b)*lt);
                          return `rgb(${r},${g},${b})`;
                     };
 
-                    // Header SVG senza rect bianco di sfondo (Trasparente)
                     let svg = `<?xml version="1.0" encoding="UTF-8" standalone="no"?>
                     <svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}" viewBox="0 0 ${w} ${h}">`;
 
-                    // Griglia
+                    svg += `<text x="${w/2}" y="40" text-anchor="middle" fill="#002b5c" font-family="'Nunito Sans', sans-serif" font-size="32" font-weight="700">Ripartizione Tematiche: ${sheetName}</text>`;
+
                     const steps = 5;
                     for(let i = 1; i <= steps; i++) {
                         const x = marginLeft + (chartW * (i / steps));
@@ -812,425 +612,194 @@
                     }
                     svg += `<line x1="${marginLeft}" y1="${marginTop}" x2="${marginLeft}" y2="${h - marginBottom}" stroke="#9ca3af" stroke-width="2" />`;
 
-                    // Disegno Barre
-                    const count = data.length;
-                    const rowHeight = chartH / count;
-                    const barHeight = rowHeight * 0.65;
-                    const r = 4; // Raggio stondatura destra
-                    
+                    const count = data.length, rowHeight = chartH / count, barHeight = rowHeight * 0.65, r = 4; 
                     data.forEach((d, i) => {
-                        const pctVal = (d.value / total) * 100;
-                        const barW = (pctVal / maxScale) * chartW;
-                        const yCenter = marginTop + (i * rowHeight) + (rowHeight / 2);
-                        const yBar = yCenter - (barHeight / 2);
-                        
-                        // Path custom per stondatura solo a destra
-                        const x = marginLeft;
-                        const y = yBar;
-                        const hB = barHeight;
-                        // M top-left L top-right-curve ... Z
+                        const pctVal = (d.value / total) * 100, barW = (pctVal / maxScale) * chartW;
+                        const yCenter = marginTop + (i * rowHeight) + (rowHeight / 2), yBar = yCenter - (barHeight / 2);
+                        const x = marginLeft, y = yBar, hB = barHeight;
                         const pathD = `M ${x} ${y} L ${x+barW-r} ${y} Q ${x+barW} ${y} ${x+barW} ${y+r} L ${x+barW} ${y+hB-r} Q ${x+barW} ${y+hB} ${x+barW-r} ${y+hB} L ${x} ${y+hB} Z`;
 
-                        // Etichetta (sx) - Colore Blu Poste Light (#0146bc)
-                        // MODIFICA FONT: Nunito Sans, weight 400
                         svg += `<text x="${marginLeft - 20}" y="${yCenter + (fontSize * 0.35)}" text-anchor="end" fill="#0146bc" font-family="'Nunito Sans', sans-serif" font-size="${fontSize}" font-weight="400">${d.label.replace(/&/g, '&amp;')}</text>`;
-                        
-                        // Barra
                         svg += `<path d="${pathD}" fill="${getThemeColor(i, count)}" />`;
-                        
-                        // Valore % (dx) - Colore Grigio Light (#757575)
-                        // MODIFICA FONT: Nunito Sans, weight 400
                         let pctString = parseFloat(pctVal.toFixed(decimals)).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: decimals }) + "%";
                         svg += `<text x="${marginLeft + barW + 15}" y="${yCenter + (fontSize * 0.35)}" text-anchor="start" fill="#757575" font-family="'Nunito Sans', sans-serif" font-size="${fontSize}" font-weight="400">${pctString}</text>`;
                     });
-
                     svg += `</svg>`;
                     
                     const blob = new Blob([svg], {type: 'image/svg+xml;charset=utf-8'});
-                    const url = URL.createObjectURL(blob);
-                    const dlLink = document.createElement('a');
-                    dlLink.href = url;
-                    dlLink.download = `Temi_Poste_${new Date().toISOString().slice(0,10)}.svg`;
-                    document.body.appendChild(dlLink);
-                    dlLink.click();
-                    document.body.removeChild(dlLink);
+                    const dlLink = document.createElement('a'); dlLink.href = URL.createObjectURL(blob);
+                    dlLink.download = `Temi_${new Date().toISOString().slice(0,10)}.svg`;
+                    document.body.appendChild(dlLink); dlLink.click(); document.body.removeChild(dlLink);
                 });
 
-                // Setup Variabili Grafico
-                const canvas = document.getElementById('temiChartCanvas');
-                const ctx = canvas.getContext('2d');
+                const canvas = document.getElementById('temiChartCanvas'); const ctx = canvas.getContext('2d');
                 const controls = {
-                    fontSize: document.getElementById('chartFontSize'),
-                    decimals: document.getElementById('chartDecimals'),
-                    threshold: document.getElementById('chartThreshold'),
-                    btnRefresh: document.getElementById('chartRefresh'),
-                    btnReset: document.getElementById('chartReset'),
-                    btnShuffle: document.getElementById('chartShuffle') 
+                    fontSize: document.getElementById('chartFontSize'), decimals: document.getElementById('chartDecimals'),
+                    threshold: document.getElementById('chartThreshold'), btnRefresh: document.getElementById('chartRefresh'),
+                    btnReset: document.getElementById('chartReset')
                 };
-
                 let currentProcessedData = []; 
 
                 function prepareData() {
                     const thresholdPercent = parseFloat(controls.threshold.value) || 0;
                     const totalTotal = rawData.reduce((acc, curr) => acc + curr.value, 0);
-
-                    let mainItems = [];
-                    let othersValue = 0;
-
+                    let mainItems = [], othersValue = 0;
                     rawData.forEach(item => {
                         const pct = (item.value / totalTotal) * 100;
-                        if (pct < thresholdPercent) {
-                            othersValue += item.value;
-                        } else {
-                            mainItems.push({ ...item });
-                        }
+                        if (pct < thresholdPercent) othersValue += item.value; else mainItems.push({ ...item });
                     });
-
-                    if (othersValue > 0) {
-                        mainItems.push({ label: 'Altro', value: othersValue, isOther: true });
-                    }
-
+                    if (othersValue > 0) mainItems.push({ label: 'Altro', value: othersValue, isOther: true });
                     const content = mainItems.filter(x => !x.isOther).sort((a, b) => b.value - a.value);
                     const others = mainItems.filter(x => x.isOther);
                     currentProcessedData = [...content, ...others];
-                    
                     drawChart();
                 }
 
                 function drawChart() {
-                    const fontSize = parseInt(controls.fontSize.value) || 30;
-                    const decimals = parseInt(controls.decimals.value);
-                    const data = currentProcessedData;
-                    const total = data.reduce((acc, curr) => acc + curr.value, 0);
+                    const fontSize = parseInt(controls.fontSize.value) || 30, decimals = parseInt(controls.decimals.value);
+                    const data = currentProcessedData, total = data.reduce((acc, curr) => acc + curr.value, 0);
 
-                    // Reset con ClearRect (Trasparente)
                     ctx.clearRect(0, 0, canvas.width, canvas.height);
-                    
-                    // Layout
-                    const w = canvas.width;
-                    const h = canvas.height;
-                    const marginLeft = 400;
-                    const marginRight = 200;
-                    const marginTop = 50;
-                    const marginBottom = 50;
-                    const chartW = w - marginLeft - marginRight;
-                    const chartH = h - marginTop - marginBottom;
+                    const w = canvas.width, h = canvas.height, marginLeft = 400, marginRight = 200, marginTop = 80, marginBottom = 50;
+                    const chartW = w - marginLeft - marginRight, chartH = h - marginTop - marginBottom;
 
-                    let maxPct = 0;
-                    data.forEach(d => {
-                        const val = (d.value / total) * 100;
-                        if(val > maxPct) maxPct = val;
-                    });
+                    let maxPct = 0; data.forEach(d => { const val = (d.value / total) * 100; if(val > maxPct) maxPct = val; });
                     const maxScale = maxPct * 1.1; 
 
-                    // Grid Lines
-                    ctx.beginPath();
-                    ctx.strokeStyle = "#e5e7eb";
-                    ctx.lineWidth = 2;
-                    const steps = 5;
+                    ctx.font = `bold 32px 'Nunito Sans', sans-serif`;
+                    ctx.fillStyle = "#002b5c";
+                    ctx.textAlign = "center";
+                    ctx.textBaseline = "top";
+                    ctx.fillText(`Ripartizione Tematiche: ${sheetName}`, w / 2, 20);
+
+                    ctx.beginPath(); ctx.strokeStyle = "#e5e7eb"; ctx.lineWidth = 2; const steps = 5;
                     for(let i = 1; i <= steps; i++) {
                         const x = marginLeft + (chartW * (i / steps));
-                        ctx.moveTo(x, marginTop);
-                        ctx.lineTo(x, h - marginBottom);
-                    }
-                    ctx.stroke();
+                        ctx.moveTo(x, marginTop); ctx.lineTo(x, h - marginBottom);
+                    } ctx.stroke();
 
-                    // Axis Line
-                    ctx.beginPath();
-                    ctx.strokeStyle = "#9ca3af";
-                    ctx.lineWidth = 2;
-                    ctx.moveTo(marginLeft, marginTop);
-                    ctx.lineTo(marginLeft, h - marginBottom);
-                    ctx.stroke();
+                    ctx.beginPath(); ctx.strokeStyle = "#9ca3af"; ctx.lineWidth = 2;
+                    ctx.moveTo(marginLeft, marginTop); ctx.lineTo(marginLeft, h - marginBottom); ctx.stroke();
 
-                    const fontFace = "'Nunito Sans', 'Segoe UI', sans-serif";
-                    const count = data.length;
-                    const rowHeight = chartH / count;
-                    const barHeight = rowHeight * 0.65; 
-
-                    // Funzione Colore (identica a SVG)
-                    // MODIFICA COLORE: Inizia con il colore del font (Brand Blue #0146bc)
                     const getThemeColor = (idx, tot) => {
-                         const stops = [
-                            {p:0.0, c:{r:1, g:70, b:188}},   // Brand Blue (#0146bc)
-                            {p:0.4, c:{r:138, g:182, b:249}}, // Light Blue
-                            {p:1.0, c:{r:220, g:238, b:255}}  // Pale
-                         ];
+                         const stops = [{p:0.0, c:{r:1, g:70, b:188}}, {p:0.4, c:{r:138, g:182, b:249}}, {p:1.0, c:{r:220, g:238, b:255}}];
                          if(tot<=1) return `rgb(${stops[0].c.r},${stops[0].c.g},${stops[0].c.b})`;
-                         const t = idx/(tot-1);
-                         let s=stops[0], e=stops[stops.length-1];
+                         const t = idx/(tot-1); let s=stops[0], e=stops[stops.length-1];
                          for(let i=0; i<stops.length-1; i++){ if(t>=stops[i].p && t<=stops[i+1].p){ s=stops[i]; e=stops[i+1]; break; } }
                          const range = e.p - s.p, lt = (t-s.p)/range;
-                         const r = Math.round(s.c.r + (e.c.r-s.c.r)*lt);
-                         const g = Math.round(s.c.g + (e.c.g-s.c.g)*lt);
-                         const b = Math.round(s.c.b + (e.c.b-s.c.b)*lt);
+                         const r = Math.round(s.c.r + (e.c.r-s.c.r)*lt), g = Math.round(s.c.g + (e.c.g-s.c.g)*lt), b = Math.round(s.c.b + (e.c.b-s.c.b)*lt);
                          return `rgb(${r},${g},${b})`;
                     };
 
+                    const count = data.length, rowHeight = chartH / count, barHeight = rowHeight * 0.65; 
                     data.forEach((d, i) => {
-                        const pctVal = (d.value / total) * 100;
-                        const barW = (pctVal / maxScale) * chartW;
-                        const yCenter = marginTop + (i * rowHeight) + (rowHeight / 2);
-                        const yBar = yCenter - (barHeight / 2);
+                        const pctVal = (d.value / total) * 100, barW = (pctVal / maxScale) * chartW;
+                        const yCenter = marginTop + (i * rowHeight) + (rowHeight / 2), yBar = yCenter - (barHeight / 2);
 
-                        // 1. Label a sinistra (Blu Poste Light #0146bc)
-                        // MODIFICA FONT: weight normal (rimosso bold)
-                        ctx.font = `normal ${fontSize}px ${fontFace}`;
-                        ctx.fillStyle = "#0146bc"; 
-                        ctx.textAlign = "right";
-                        ctx.textBaseline = "middle";
+                        ctx.font = `normal ${fontSize}px 'Nunito Sans', sans-serif`;
+                        ctx.fillStyle = "#0146bc"; ctx.textAlign = "right"; ctx.textBaseline = "middle";
                         ctx.fillText(d.label, marginLeft - 20, yCenter);
 
-                        // 2. Barra (Scala Cromatica)
-                        ctx.fillStyle = getThemeColor(i, count);
-                        
-                        // Round Rect: 0 a sinistra, 4px a destra
-                        ctx.beginPath();
-                        if (ctx.roundRect) {
-                            ctx.roundRect(marginLeft, yBar, barW, barHeight, [0, 4, 4, 0]);
-                        } else {
-                            ctx.rect(marginLeft, yBar, barW, barHeight);
-                        }
+                        ctx.fillStyle = getThemeColor(i, count); ctx.beginPath();
+                        if (ctx.roundRect) ctx.roundRect(marginLeft, yBar, barW, barHeight, [0, 4, 4, 0]); else ctx.rect(marginLeft, yBar, barW, barHeight);
                         ctx.fill();
 
-                        // 3. Valore a destra (Grigio Light #757575)
-                        let pctString = parseFloat(pctVal.toFixed(decimals)).toLocaleString('it-IT', { 
-                            minimumFractionDigits: 0, 
-                            maximumFractionDigits: decimals 
-                        }) + "%";
-
-                        ctx.fillStyle = "#757575";
-                        ctx.textAlign = "left";
-                        ctx.fillText(pctString, marginLeft + barW + 15, yCenter);
+                        let pctString = parseFloat(pctVal.toFixed(decimals)).toLocaleString('it-IT', { minimumFractionDigits: 0, maximumFractionDigits: decimals }) + "%";
+                        ctx.fillStyle = "#757575"; ctx.textAlign = "left"; ctx.fillText(pctString, marginLeft + barW + 15, yCenter);
                     });
                 }
 
-                // LISTENERS UI
-                controls.fontSize.addEventListener('input', drawChart);
-                controls.decimals.addEventListener('input', drawChart);
-                controls.btnRefresh.addEventListener('click', drawChart);
-                controls.threshold.addEventListener('change', prepareData);
-
-                controls.btnReset.addEventListener('click', () => {
-                    controls.fontSize.value = 30;
-                    controls.decimals.value = 1;
-                    controls.threshold.value = 0;
-                    prepareData(); 
-                });
+                controls.fontSize.addEventListener('input', drawChart); controls.decimals.addEventListener('input', drawChart);
+                controls.btnRefresh.addEventListener('click', drawChart); controls.threshold.addEventListener('change', prepareData);
+                controls.btnReset.addEventListener('click', () => { controls.fontSize.value = 30; controls.decimals.value = 1; controls.threshold.value = 0; prepareData(); });
 
                 setTimeout(prepareData, 100);
             }
 
-            // --- INIZIO MODIFICA 3: Aggiunte funzioni per Summary ---
-            
-            // *** NUOVA: Funzione per leggere "Number of comments" ***
             function parseCommentsByPlatform(ws) {
-                const json = XLSX.utils.sheet_to_json(ws, { 
-                    range: "A16:B50", // Legge dalla riga 16 in giù
-                    header: ["Platform", "Comments"],
-                });
-
-                let platforms = [];
-                let total = 0;
-                
+                const json = XLSX.utils.sheet_to_json(ws, { range: "A16:B50", header: ["Platform", "Comments"] });
+                let platforms = [], total = 0;
                 for (const row of json) {
-                    const platform = row['Platform'];
-                    const comments = parseInt(row['Comments'], 10) || 0;
-
-                    // Stoppa se la piattaforma è vuota o è la riga totale (che ricalcoliamo)
-                    if (!platform || platform.toLowerCase() === 'total') {
-                        break;
-                    }
-                    
-                    if (comments > 0) {
-                        platforms.push({ platform: platform, comments: comments });
-                        total += comments;
-                    }
+                    const platform = row['Platform'], comments = parseInt(row['Comments'], 10) || 0;
+                    if (!platform || platform.toLowerCase() === 'total') break;
+                    if (comments > 0) { platforms.push({ platform: platform, comments: comments }); total += comments; }
                 }
                 return { platforms, total };
             }
 
-            // --- NUOVA FUNZIONE PER FORMATTAZIONE M/K ---
             function formatTotal(value) {
-                const num = parseFloat(value);
-                if (isNaN(num)) return value; // Gestione sicurezza
-                
-                if (num >= 1000000) {
-                    const mNum = num / 1000000;
-                    // Formatta con max 2 decimali, usa virgola, e trimma zeri finali
-                    return mNum.toLocaleString('it-IT', { maximumFractionDigits: 2 }) + 'M';
-                }
-
-                if (num >= 1000) {
-                    const kNum = num / 1000;
-                    // Formatta con max 2 decimali, usa virgola, e trimma zeri finali
-                    return kNum.toLocaleString('it-IT', { maximumFractionDigits: 2 }) + 'K';
-                }
-                
-                // Formatta come intero (es. 950)
+                const num = parseFloat(value); if (isNaN(num)) return value; 
+                if (num >= 1000000) return (num / 1000000).toLocaleString('it-IT', { maximumFractionDigits: 2 }) + 'M';
+                if (num >= 1000) return (num / 1000).toLocaleString('it-IT', { maximumFractionDigits: 2 }) + 'K';
                 return num.toLocaleString('it-IT', { maximumFractionDigits: 0 });
             }
-            // --- FINE NUOVA FUNZIONE ---
 
             function calculateSheetTotal(ws) {
-                // Usa la stessa logica di processSheet per estrarre i dati
-                const json = XLSX.utils.sheet_to_json(ws, { 
-                    range: "A15:E45", 
-                    header: ["A", "B", "C", "D", "E"],
-                    cellDates: true 
-                });
-
+                const json = XLSX.utils.sheet_to_json(ws, { range: "A15:E45", header: ["A", "B", "C", "D", "E"], cellDates: true });
                 let totalUser = 0;
-                
                 for (let i = 0; i < json.length; i++) {
-                    const row = json[i];
-                    const dateValue = row['A']; 
-                    
-                    // Stessa logica di stop di processSheet
-                    if (!dateValue) {
-                        break; 
-                    }
-                    
-                    // Controllo validità data (necessario per saltare righe non valide)
+                    const dateValue = json[i]['A']; if (!dateValue) break; 
                     let jsDate;
-                    if (dateValue instanceof Date) {
-                        jsDate = dateValue;
-                    } else if (typeof dateValue === 'string') {
-                        jsDate = new Date(dateValue); 
-                    } else if (typeof dateValue === 'number') {
-                        // Converte il numero seriale di Excel
-                        const excelEpoch = new Date(1899, 11, 30);
-                        jsDate = new Date(excelEpoch.getTime() + dateValue * 24 * 60 * 60 * 1000);
-                    }
-
-                    if (!jsDate || isNaN(jsDate.getTime())) {
-                        continue; 
-                    }
-
-                    // Somma solo la colonna 'D' (Attività Utenti)
-                    totalUser += (parseInt(row['D'], 10) || 0);
+                    if (dateValue instanceof Date) jsDate = dateValue;
+                    else if (typeof dateValue === 'string') jsDate = new Date(dateValue); 
+                    else if (typeof dateValue === 'number') jsDate = new Date((new Date(1899, 11, 30)).getTime() + dateValue * 24 * 60 * 60 * 1000);
+                    if (!jsDate || isNaN(jsDate.getTime())) continue; 
+                    totalUser += (parseInt(json[i]['D'], 10) || 0);
                 }
                 return totalUser;
             }
 
-            // *** MODIFICATA: Funzione calculateAndDisplaySummary aggiornata ***
             function calculateAndDisplaySummary(wb) {
-                // --- 1. Dati "Dettaglio Facebook" (logica esistente) ---
-                const summarySheets = {
-                    "Community Poste Italiane": 0,
-                    "Community Postepay": 0,
-                    "Community PosteMobile": 0
-                };
-                let overallTotal = 0;
-
+                const summarySheets = { "Community Poste Italiane": 0, "Community Postepay": 0, "Community PosteMobile": 0 }; let overallTotal = 0;
                 for (const sheetName in summarySheets) {
-                    if (wb.SheetNames.includes(sheetName)) {
-                        const total = calculateSheetTotal(wb.Sheets[sheetName]);
-                        summarySheets[sheetName] = total;
-                        overallTotal += total;
-                    }
+                    if (wb.SheetNames.includes(sheetName)) { const total = calculateSheetTotal(wb.Sheets[sheetName]); summarySheets[sheetName] = total; overallTotal += total; }
                 }
-                
-                summaryPI.textContent = kFormatter(summarySheets["Community Poste Italiane"]);
-                summaryPP.textContent = kFormatter(summarySheets["Community Postepay"]);
-                summaryPM.textContent = kFormatter(summarySheets["Community PosteMobile"]);
-                summaryOverall.textContent = kFormatter(overallTotal);
+                summaryPI.textContent = kFormatter(summarySheets["Community Poste Italiane"]); summaryPP.textContent = kFormatter(summarySheets["Community Postepay"]);
+                summaryPM.textContent = kFormatter(summarySheets["Community PosteMobile"]); summaryOverall.textContent = kFormatter(overallTotal);
 
-                // --- 2. Dati "Dettaglio commenti per canali social" (Nuova Logica) ---
-                const commentsListContainer = document.getElementById('comments-by-channel-list');
-                const commentsTotalEl = document.getElementById('comments-by-channel-total');
-                commentsListContainer.innerHTML = ''; // Pulisci
+                const commentsListContainer = document.getElementById('comments-by-channel-list'), commentsTotalEl = document.getElementById('comments-by-channel-total');
+                commentsListContainer.innerHTML = ''; 
                 
-                const commentsSheetName = "Number of comments";
-                if (wb.SheetNames.includes(commentsSheetName)) {
-                    const commentsData = parseCommentsByPlatform(wb.Sheets[commentsSheetName]);
-                    
+                if (wb.SheetNames.includes("Number of comments")) {
+                    const commentsData = parseCommentsByPlatform(wb.Sheets["Number of comments"]);
                     commentsData.platforms.forEach(platform => {
-                        // Crea un ID univoco per il testo da copiare
                         const copyId = `copy-channel-${platform.platform.replace(/[^a-zA-Z0-9]/g, '')}`;
-                        const el = document.createElement('div');
-                        el.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-lg';
-                        el.innerHTML = `
-                            <span class="font-medium text-gray-700">${platform.platform}:</span>
+                        const el = document.createElement('div'); el.className = 'flex justify-between items-center p-3 bg-gray-50 rounded-lg';
+                        el.innerHTML = `<span class="font-medium text-gray-700">${platform.platform}:</span>
                             <div class="flex items-center gap-2">
                                 <span class="font-bold text-brand-dark-blue text-lg" id="${copyId}">${platform.comments.toLocaleString('it-IT')}</span>
-                                <button title="Copia valore" class="copy-summary-btn text-gray-400 hover:text-brand-blue" onclick="copySummaryValue('${copyId}', this)">
+                                <button class="copy-summary-btn text-gray-400 hover:text-brand-blue" onclick="copySummaryValue('${copyId}', this)">
                                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5"><path stroke-linecap="round" stroke-linejoin="round" d="M16.5 8.25V6a2.25 2.25 0 00-2.25-2.25H6A2.25 2.25 0 003.75 6v8.25A2.25 2.25 0 006 16.5h2.25m8.25-8.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-7.5A2.25 2.25 0 018.25 18v-1.5m8.25-8.25h-6.75" /></svg>
-                                </button>
-                            </div>
-                        `;
+                                </button></div>`;
                         commentsListContainer.appendChild(el);
                     });
-                    
                     commentsTotalEl.textContent = formatTotal(commentsData.total);
-                    
-                } else {
-                    commentsListContainer.innerHTML = '<p class="text-gray-500">Foglio "Number of comments" non trovato.</p>';
-                    commentsTotalEl.textContent = '0';
-                }
-
-                // Mostra la sezione
+                } else { commentsListContainer.innerHTML = '<p class="text-gray-500">N/D</p>'; commentsTotalEl.textContent = '0'; }
                 showSection(summarySection);
             }
-            // --- FINE MODIFICA 3 ---
 
-            // *** MODIFICATA: Funzione resetUI aggiornata ***
             function resetUI() {
-                // --- INIZIO MODIFICA 4: Reset UI per Summary ---
-                hideSection(controlsSection);
-                hideSection(chartsSection);
-                hideSection(downloadSection);
-                hideSection(tableSection); 
-                hideSection(summarySection); // Aggiunto
-                
-                // Reset testi summary Facebook
-                summaryPI.textContent = '-';
-                summaryPP.textContent = '-';
-                summaryPM.textContent = '-';
-                summaryOverall.textContent = '-';
-                
-                // Reset testi summary Canali Social
-                const commentsListContainer = document.getElementById('comments-by-channel-list');
-                const commentsTotalEl = document.getElementById('comments-by-channel-total');
-                if(commentsListContainer) commentsListContainer.innerHTML = '';
-                if(commentsTotalEl) commentsTotalEl.textContent = '0';
-                // --- FINE MODIFICA 4 ---
-                
-                if (charts.bar) charts.bar.destroy();
-                if (charts.donut) charts.donut.destroy(); 
-                charts.bar = null;
-                charts.donut = null; 
-                
-                tabsContainer.innerHTML = '';
-                tableContainer.innerHTML = ''; 
-                currentSheetName = null;
+                hideSection(controlsSection); hideSection(chartsSection); hideSection(downloadSection); hideSection(tableSection); hideSection(summarySection); 
+                summaryPI.textContent = '-'; summaryPP.textContent = '-'; summaryPM.textContent = '-'; summaryOverall.textContent = '-';
+                const list = document.getElementById('comments-by-channel-list'), tot = document.getElementById('comments-by-channel-total');
+                if(list) list.innerHTML = ''; if(tot) tot.textContent = '0';
+                if (charts.bar) charts.bar.destroy(); if (charts.donut) charts.donut.destroy(); 
+                charts.bar = null; charts.donut = null; tabsContainer.innerHTML = ''; tableContainer.innerHTML = ''; currentSheetName = null;
             }
 
-            // Funzione kFormatter aggiornata per gestire `,0`
-            // QUESTA FUNZIONE SODDISFA GIA' I REQUISITI (es. 1,5k e 2k)
             function kFormatter(value) {
-                const num = parseFloat(value);
-                if (isNaN(num)) return value; // Gestione sicurezza
-
-                if (num >= 1000) {
-                    let kNum = num / 1000;
-                    // Formatta con max 1 decimale, usa virgola (es. 1,5k o 1k)
-                    return kNum.toLocaleString('it-IT', { maximumFractionDigits: 1 }) + 'k';
-                }
-                // Formatta come intero (es. 950)
+                const num = parseFloat(value); if (isNaN(num)) return value; 
+                if (num >= 1000) return (num / 1000).toLocaleString('it-IT', { maximumFractionDigits: 1 }) + 'k';
                 return num.toLocaleString('it-IT', { maximumFractionDigits: 0 }); 
             }
 
-
-            // --- Funzioni di Creazione Grafici ---
-
+            // --- Creazione Grafici Nativi ---
             function createBarChart(elementId, series, categories) {
                 if (charts.bar) charts.bar.destroy();
                 document.getElementById(elementId).innerHTML = '';
                 const options = getBarChartOptions(series, categories);
                 const chart = new ApexCharts(document.getElementById(elementId), options);
-                chart.render();
-                return chart;
+                chart.render(); return chart;
             }
             
             function createDonutChart(elementId, series, labels) {
@@ -1238,514 +807,179 @@
                 document.getElementById(elementId).innerHTML = '';
                 const options = getDonutChartOptions(series, labels);
                 const chart = new ApexCharts(document.getElementById(elementId), options);
-                chart.render();
-                return chart;
+                chart.render(); return chart;
             }
 
             function getBarChartOptions(series, categories) {
                 return {
                     series: series,
-                    chart: {
-                        type: 'bar',
-                        height: 470,
-                        width: '100%', 
-                        stacked: true, 
-                        toolbar: { show: false },
-                        fontFamily: 'Nunito Sans, sans-serif'
-                    },
+                    chart: { type: 'bar', height: 500, width: '100%', stacked: true, toolbar: { show: false }, animations: { enabled: false }, selection: { enabled: false }, background: 'transparent', fontFamily: 'Nunito Sans, sans-serif' },
                     colors: [chartColors.user, chartColors.moderator],
-                    plotOptions: {
-                        bar: {
-                            horizontal: false,
-                            columnWidth: '90%', 
-                        }
-                    },
-                    dataLabels: {
-                        enabled: false 
-                    },
-                    xaxis: {
-                        categories: categories,
-                        labels: {
-                            style: {
-                                colors: chartColors.text, /* MODIFICA: Usa colore scurito */
-                                fontSize: '30px', 
-                                fontWeight: 400
-                            },
-                            offsetY: 15,
-                            rotate: -45,
-                            rotateAlways: true
-                        },
-                        tickAmount: categories.length > 5 ? Math.floor(categories.length / 3) : undefined,
-                        tickPlacement: 'on'
-                    },
-                    yaxis: {
-                         labels: {
-                            style: {
-                                colors: chartColors.text, /* MODIFICA: Usa colore scurito */
-                                fontSize: '30px', 
-                                fontWeight: 400
-                            },
-                            formatter: kFormatter,
-                            offsetX: -15
-                         },
-                        axisBorder: {
-                            show: false
-                        },
-                        axisTicks: {
-                            show: false
-                        },
-                        tickAmount: 5
-                    },
-                    legend: {
-                        show: false
-                    },
-                    tooltip: {
-                        y: {
-                            formatter: kFormatter
-                        }
-                    },
-                    grid: {
-                        borderColor: '#cccccc',
-                        strokeDashArray: 0,
-                        xaxis: {
-                            lines: {
-                                show: false
-                            }
-                        },
-                        padding: {
-                            left: 0,
-                            right: 0
-                        }
-                    }
+                    plotOptions: { bar: { horizontal: false, columnWidth: '90%' } },
+                    dataLabels: { enabled: false }, tooltip: { enabled: false },
+                    states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
+                    xaxis: { categories: categories, labels: { style: { colors: chartColors.text, fontSize: '30px', fontWeight: 400 }, offsetY: 15, rotate: -45, rotateAlways: true }, tickAmount: categories.length > 5 ? Math.floor(categories.length / 3) : undefined, tickPlacement: 'on' },
+                    yaxis: { labels: { style: { colors: chartColors.text, fontSize: '30px', fontWeight: 400 }, formatter: kFormatter, offsetX: -15 }, axisBorder: { show: false }, axisTicks: { show: false }, tickAmount: 5 },
+                    legend: { show: false },
+                    grid: { borderColor: '#cccccc', strokeDashArray: 0, xaxis: { lines: { show: false } }, padding: { left: 0, right: 0 } }
                 };
             }
             
-
-           // --- Funzione getDonutChartOptions aggiornata ---
             function getDonutChartOptions(series, labels) {
-                
-                // Calcola il totale per il formatter della legenda
                 const total = series.reduce((a, b) => a + b, 0);
-                
                 return {
-                    series: series,
+                    series: series, 
                     labels: labels,
-                    chart: {
-                        type: 'donut',
-                        height: 320, 
-                        fontFamily: 'Nunito Sans, sans-serif'
+                    chart: { 
+                        type: 'donut', 
+                        height: 380, 
+                        background: 'transparent', 
+                        animations: { enabled: false }, 
+                        selection: { enabled: false }, 
+                        fontFamily: 'Nunito Sans, sans-serif' 
                     },
-                    // Ordine colori: [Utenti, Moderatori]
                     colors: [chartColors.user, chartColors.moderator], 
-                    
-                    dataLabels: {
-                        enabled: false
-                    },
-                    
+                    dataLabels: { enabled: false }, 
+                    tooltip: { enabled: false },
+                    states: { hover: { filter: { type: 'none' } }, active: { filter: { type: 'none' } } },
                     legend: {
-                        show: true,
+                        show: true, 
                         position: 'top', 
-                        horizontalAlign: 'center',
-                        offsetY: 5, 
+                        horizontalAlign: 'center', 
+                        offsetY: 0, 
                         fontSize: '20px', 
                         fontWeight: 700, 
-                        labels: {
-                            // --- MODIFICA 2: Blu etichette uniformato al blu "moderator" ---
-                            colors: chartColors.moderator 
-                        },
-                        markers: {
+                        labels: { colors: chartColors.moderator },
+                        markers: { 
                             width: 18, 
                             height: 18, 
-                            radius: 3, 
-                            // --- MODIFICA 3: Pallini abbassati (da 8 a 10) ---
-                            offsetY: 10 
-                        },
-                        itemMargin: {
-                            horizontal: 15,
-                            vertical: 5
-                        },
+                            radius: 9, 
+                            offsetX: -4, 
+                            offsetY: 5 // Default iniziale modificabile via slider
+                        }, 
+                        itemMargin: { horizontal: 15, vertical: 5 },
                         formatter: function (seriesName, opts) {
                             const percent = (series[opts.seriesIndex] / total * 100).toFixed(0);
-                            // --- MODIFICA 1: Grigio valori uniformato al grigio "text" dei grafici ---
-                            const grayColor = chartColors.text; // Era '#333333'
-                            return `${seriesName} <span style="font-weight: 400; color: ${grayColor}; margin-left: 6px;">${percent}%</span>`;
+                            return `${seriesName} <span style="font-weight: 400; color: ${chartColors.text}; margin-left: 6px;">${percent}%</span>`;
                         }
                     },
-                    
-                    plotOptions: {
-                        pie: {
-                            offsetY: 20, 
-                            donut: {
-                                size: '65%', 
-                                labels: {
-                                    show: false 
-                                }
-                            }
-                        }
-                    },
-                    
-                    tooltip: {
-                        y: {
-                            formatter: kFormatter, 
-                            title: {
-                                formatter: function (seriesName) {
-                                    return seriesName + ':';
-                                }
-                            }
-                        },
-                        fillSeriesColor: true 
-                    },
-
-                    states: {
-                        hover: {
-                            filter: {
-                                type: 'none'
-                            }
-                        }
+                    grid: { padding: { top: 10, right: 0, bottom: 30, left: 0 } },
+                    plotOptions: { 
+                        pie: { 
+                            offsetY: 0, 
+                            donut: { size: '65%', labels: { show: false } } 
+                        } 
                     }
                 };
             }
 
+            // --- Download ---
+            async function downloadAllFilesZip() {
+                const btn = document.getElementById('downloadAllBtn'), textEl = btn.querySelector('.btn-text'), originalText = textEl.textContent;
+                setButtonLoading(btn, textEl, "Creazione archivio in corso...");
+                try {
+                    const zip = new JSZip(), safeSheetName = (currentSheetName || 'Dashboard').replace(/ /g, '_'), folder = zip.folder(`Report_${safeSheetName}`);
+                    
+                    const jsonContent = handleExportExecutiveSummary(true); 
+                    if(jsonContent) folder.file(`${safeSheetName}_ExecutiveSummary.json`, jsonContent);
+                    
+                    const svgBarStr = getApexSvgString('chart-bar'); 
+                    if(svgBarStr) folder.file(`${safeSheetName}_Barre.svg`, svgBarStr);
+                    
+                    // Rimosso l'export SVG della torta dal file ZIP
+                    
+                    const canvasBar = await html2canvas(document.getElementById('chart-bar-wrapper'), { scale: 2, useCORS: true, backgroundColor: null, logging: false });
+                    const barBlob = await new Promise(resolve => canvasBar.toBlob(resolve, 'image/png')); folder.file(`${safeSheetName}_Barre.png`, barBlob);
+                    
+                    const canvasDonut = await html2canvas(document.getElementById('chart-donut-wrapper'), { scale: 2, useCORS: true, backgroundColor: null, logging: false });
+                    const donutBlob = await new Promise(resolve => canvasDonut.toBlob(resolve, 'image/png')); folder.file(`${safeSheetName}_Torta.png`, donutBlob);
+                    
+                    const zipBlob = await zip.generateAsync({ type: "blob" }); saveAs(zipBlob, `Asset_${safeSheetName}.zip`);
+                    setButtonDone(btn, textEl, "Archivio Scaricato!", originalText);
+                } catch (error) { setButtonError(btn, textEl, "Errore ZIP", originalText); }
+            }
 
-            // --- MODIFICA 2: Funzione downloadPNG aggiornata per accettare 'cropBottomPx' ---
-            async function downloadPNG(elementIdToCapture, filename, buttonEl, cropBottomPx = 0) {
+            async function downloadPNG(elementIdToCapture, filename, buttonEl) {
                 const elementToCapture = document.getElementById(elementIdToCapture);
-                if (!elementToCapture) {
-                    showError("Elemento del grafico non trovato: #" + elementIdToCapture);
-                    return;
-                }
-                
-                const btnTextEl = buttonEl.querySelector('.btn-text');
-                const originalText = btnTextEl.textContent;
-                setButtonLoading(buttonEl, btnTextEl, "Generazione PNG...");
-
+                if (!elementToCapture) { showError("Elemento non trovato."); return; }
+                const originalContent = buttonEl.innerHTML; buttonEl.textContent = "Generazione PNG..."; buttonEl.disabled = true;
                 try {
-                    await new Promise(resolve => setTimeout(resolve, 300));
-
-                    const canvas = await html2canvas(elementToCapture, {
-                        scale: 2,
-                        useCORS: true,
-                        backgroundColor: '#ffffff',
-                        logging: false
-                    });
-                    
-                    let dataUrl;
-
-                    // Logica di ritaglio
-                    if (cropBottomPx > 0 && canvas.height > cropBottomPx) {
-                        const originalWidth = canvas.width;
-                        const originalHeight = canvas.height;
-                        const newHeight = originalHeight - cropBottomPx;
-
-                        const croppedCanvas = document.createElement('canvas');
-                        const ctx = croppedCanvas.getContext('2d');
-                        
-                        croppedCanvas.width = originalWidth;
-                        croppedCanvas.height = newHeight;
-                        
-                        // Disegna l'immagine ritagliata (dall'angolo 0,0 fino alla nuova altezza)
-                        ctx.drawImage(canvas, 0, 0, originalWidth, newHeight, 0, 0, originalWidth, newHeight);
-                        
-                        dataUrl = croppedCanvas.toDataURL('image/png');
-                    } else {
-                        // Comportamento originale se non c'è crop
-                        dataUrl = canvas.toDataURL('image/png');
-                    }
-                    // Fine logica di ritaglio
-
-                    const link = document.createElement('a');
-                    link.href = dataUrl;
-                    
-                    const safeSheetName = (currentSheetName || 'grafico').replace(/ /g, '_');
-                    link.download = `${safeSheetName}_${filename}`;
-                    
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    setButtonDone(buttonEl, btnTextEl, "Fatto!", originalText);
-
-                } catch (err) {
-                    console.error("Errore during l'esportazione PNG:", err);
-                    showError("Impossibile generare il PNG. " + err.message);
-                    setButtonError(buttonEl, btnTextEl, "Errore", originalText);
-                }
+                    const canvas = await html2canvas(elementToCapture, { scale: 2, useCORS: true, backgroundColor: null, logging: false });
+                    const dataUrl = canvas.toDataURL('image/png'), link = document.createElement('a'); link.href = dataUrl;
+                    link.download = `${(currentSheetName || 'grafico').replace(/ /g, '_')}_${filename}`;
+                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                    buttonEl.innerHTML = "Fatto!"; setTimeout(() => { buttonEl.innerHTML = originalContent; buttonEl.disabled = false; }, 2000);
+                } catch (err) { buttonEl.innerHTML = "Errore"; setTimeout(() => { buttonEl.innerHTML = originalContent; buttonEl.disabled = false; }, 3000); }
             }
-            
-            // --- INIZIO MODIFICA (JS) 2: Funzione per copiare valore summary ---
-            // *** MODIFICATA: Aggiunta a window per essere accessibile da onclick dinamico ***
+
+            function downloadApexSVG(chartElementId, suffix) {
+                const svgString = getApexSvgString(chartElementId);
+                if (!svgString) { showError("Impossibile trovare l'SVG."); return; }
+                const blob = new Blob([svgString], {type: 'image/svg+xml;charset=utf-8'});
+                saveAs(blob, `${(currentSheetName || 'Dashboard').replace(/ /g, '_')}_${suffix}`); 
+            }
+
+            function getApexSvgString(chartElementId) {
+                const chartWrapper = document.getElementById(chartElementId); if(!chartWrapper) return null;
+                const svgNode = chartWrapper.querySelector('.apexcharts-svg'); if (!svgNode) return null;
+                const clone = svgNode.cloneNode(true); clone.style.background = 'transparent'; 
+                let svgString = new XMLSerializer().serializeToString(clone);
+                if (!svgString.match(/^<svg[^>]+xmlns="http\:\/\/www\.w3\.org\/2000\/svg"/)) svgString = svgString.replace(/^<svg/, '<svg xmlns="http://www.w3.org/2000/svg"');
+                return svgString;
+            }
+
             window.copySummaryValue = async function(elementId, buttonEl) {
-                const element = document.getElementById(elementId);
-                if (!element) return;
-                
-                const valueToCopy = element.textContent;
-                if (valueToCopy === '-' || valueToCopy === '0') return; // Non copiare placeholder o zero
-
-                // Salva l'icona originale
-                const originalIcon = buttonEl.innerHTML;
-                
-                // Icona di "check" (successo)
-                const successIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-green-500">
-                                        <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
-                                     </svg>`;
-                
-                try {
-                    // Usa la Clipboard API moderna
-                    await navigator.clipboard.writeText(valueToCopy);
-                    
-                    // Mostra icona successo
-                    buttonEl.innerHTML = successIcon;
-                    buttonEl.disabled = true;
-
-                    // Ripristina l'icona originale dopo 1.5 sec
-                    setTimeout(() => {
-                        buttonEl.innerHTML = originalIcon;
-                        buttonEl.disabled = false;
-                    }, 1500);
-
-                } catch (err) {
-                    console.error('Errore durante la copia del valore:', err);
-                    // (Opzionale) Si potrebbe mostrare un'icona di errore
-                }
+                const element = document.getElementById(elementId); if (!element) return;
+                const valueToCopy = element.textContent; if (valueToCopy === '-' || valueToCopy === '0') return; 
+                const originalIcon = buttonEl.innerHTML, successIcon = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-5 h-5 text-green-500"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" /></svg>`;
+                try { await navigator.clipboard.writeText(valueToCopy); buttonEl.innerHTML = successIcon; buttonEl.disabled = true; setTimeout(() => { buttonEl.innerHTML = originalIcon; buttonEl.disabled = false; }, 1500); } catch (err) {}
             }
-            // --- FINE MODIFICA (JS) 2 ---
             
-            // ==========================================
-            // NUOVA FUNZIONALITÀ: EXECUTIVE SUMMARY JSON
-            // ==========================================
-
-            // 1. Formattazione Numeri (K/M)
             function formatSmartNumber(num) {
-                if (num === null || num === undefined) return "0";
-                
-                let value = num;
-                let suffix = '';
-
-                if (Math.abs(num) >= 1000000) {
-                    value = num / 1000000;
-                    suffix = 'M';
-                } else if (Math.abs(num) >= 999) {
-                    value = num / 1000;
-                    suffix = 'K';
-                }
-
-                // Arrotonda a 2 decimali e rimuove zeri finali (es. 15.00 -> 15)
-                let formatted = parseFloat(value.toFixed(2)).toString();
-                
-                // Sostituisce il punto con la virgola
-                formatted = formatted.replace('.', ',');
-                
-                return formatted + suffix;
+                if (!num) return "0"; let value = num, suffix = '';
+                if (Math.abs(num) >= 1000000) { value = num / 1000000; suffix = 'M'; } else if (Math.abs(num) >= 999) { value = num / 1000; suffix = 'K'; }
+                return parseFloat(value.toFixed(2)).toString().replace('.', ',') + suffix;
             }
 
-            // 2. Logica Trend
             function getTrendDescription(changeValue) {
-                // Se la cella è vuota o undefined
                 if (changeValue === null || changeValue === undefined) return "N/D";
-                
-                // Excel solitamente salva le percentuali come decimali (es. 2% = 0.02)
-                // Se il valore è > 1 assumiamo sia già percentuale intera (es 2.5), ma standard è < 1
-                
-                const absValue = Math.abs(changeValue);
-                const isPositive = changeValue >= 0;
-                const baseText = isPositive ? "crescita" : "riduzione";
-                
-                let prefix = "";
-
-                // Soglia 2% (0.02)
-                if (absValue < 0.02) {
-                    prefix = "lieve ";
-                } 
-                // Soglia 10% (0.10)
-                else if (absValue > 0.10) {
-                    prefix = "significativa ";
-                }
-
-                return `${prefix}${baseText}`;
+                const absValue = Math.abs(changeValue), baseText = changeValue >= 0 ? "crescita" : "riduzione";
+                return `${absValue < 0.02 ? "lieve " : (absValue > 0.10 ? "significativa " : "")}${baseText}`;
             }
 
-            // 3. Funzione Principale di Esportazione
-            function handleExportExecutiveSummary() {
-                if (!workbook) {
-                    showError("Nessun file caricato.");
-                    return;
-                }
-                
-                const btn = document.getElementById('downloadJsonBtn');
-                const btnTextEl = btn.querySelector('.btn-text');
-                const originalText = btnTextEl.textContent;
-                setButtonLoading(btn, btnTextEl, "Generazione...");
-
+            function handleExportExecutiveSummary(returnOnly = false) {
+                if (!workbook) { if(!returnOnly) showError("Nessun file caricato."); return null; }
+                let btn, btnTextEl, originalText;
+                if (!returnOnly) { btn = document.getElementById('downloadJsonBtn'); if (btn) { btnTextEl = btn.textContent; btn.textContent = "Generazione..."; btn.disabled = true; } }
                 try {
-                    // --- 1. DATA E ORA ---
-                    const now = new Date();
-                    const aaaa = now.getFullYear();
-                    const mm = String(now.getMonth() + 1).padStart(2, '0');
-                    const gg = String(now.getDate()).padStart(2, '0');
-                    const hh = String(now.getHours()).padStart(2, '0');
-                    const min = String(now.getMinutes()).padStart(2, '0');
-                    
-                    const outputFileName = `ES3_${aaaa}_${mm}_${gg}_${hh}_${min}.json`;
-
-                    // --- 2. ESTRAZIONE DATI ---
-                    
-                    // A) Totale Commenti
-                    let totalComments = 0;
-                    const sheetComments = workbook.Sheets["Number of comments"];
-                    if (sheetComments) {
-                         const { total } = parseCommentsByPlatform(sheetComments);
-                         totalComments = total;
+                    const now = new Date(), a = now.getFullYear(), m = String(now.getMonth()+1).padStart(2,'0'), g = String(now.getDate()).padStart(2,'0'), h = String(now.getHours()).padStart(2,'0'), min = String(now.getMinutes()).padStart(2,'0');
+                    let totalComments = 0; if (workbook.Sheets["Number of comments"]) totalComments = parseCommentsByPlatform(workbook.Sheets["Number of comments"]).total;
+                    let topTopicName = "N/D", topTopicPercent = "0%";
+                    if (workbook.Sheets["Temi trattati Poste Italiane FB"]) {
+                        let topicsData = [], totalTopicsCount = 0;
+                        XLSX.utils.sheet_to_json(workbook.Sheets["Temi trattati Poste Italiane FB"], { range: "A15:B50", header: ["Argomento", "Valore"] }).forEach(r => { const a = r['Argomento'], v = parseInt(r['Valore'], 10)||0; if(a && v>0){topicsData.push({name:a,count:v});totalTopicsCount+=v;} });
+                        if (topicsData.length > 0) { topicsData.sort((a, b) => b.count - a.count); const best = topicsData[0]; topTopicName = best.name; if (totalTopicsCount > 0) topTopicPercent = formatSmartNumber((best.count / totalTopicsCount) * 100) + "%"; }
                     }
-
-                    // B) Top Topic & Percentuale
-                    let topTopicName = "N/D";
-                    let topTopicPercent = "0%";
-                    const sheetTopics = workbook.Sheets["Temi trattati Poste Italiane FB"];
-                    
-                    if (sheetTopics) {
-                        const jsonTopics = XLSX.utils.sheet_to_json(sheetTopics, { 
-                            range: "A15:B50", 
-                            header: ["Argomento", "Valore"]
-                        });
-                        
-                        let topicsData = [];
-                        let totalTopicsCount = 0;
-                        
-                        jsonTopics.forEach(row => {
-                            const arg = row['Argomento'];
-                            const val = parseInt(row['Valore'], 10) || 0;
-                            if(arg && val > 0) {
-                                topicsData.push({ name: arg, count: val });
-                                totalTopicsCount += val;
-                            }
-                        });
-                        
-                        // Trova il max
-                        if (topicsData.length > 0) {
-                            topicsData.sort((a, b) => b.count - a.count);
-                            const best = topicsData[0];
-                            topTopicName = best.name;
-                            
-                            if (totalTopicsCount > 0) {
-                                // Calcolo percentuale
-                                const pct = (best.count / totalTopicsCount) * 100;
-                                topTopicPercent = formatSmartNumber(pct) + "%";
-                            }
-                        }
-                    }
-
-                    // C) Variazione Trend (Cella C16 di "Number of comments (2)")
-                    let trendDesc = "N/D";
-                    const sheetTrend = workbook.Sheets["Number of comments (2)"];
-                    if (sheetTrend) {
-                        const cell = sheetTrend['C16'];
-                        if (cell && cell.v !== undefined) {
-                            trendDesc = getTrendDescription(cell.v);
-                        }
-                    }
-
-                    // --- 3. COSTRUZIONE JSON ---
-                    const exportData = {
-                        "Totale commenti": formatSmartNumber(totalComments),
-                        "Dettaglio Argomenti: Temi trattati Poste Italiane FB: l'argomento con più commenti": topTopicName,
-                        "Dettaglio Argomenti: valore in percentuale commenti argomento Temi trattati Poste Italiane FB": topTopicPercent,
-                        "Variazione commenti rispetto al mese precedente": trendDesc
-                    };
-
-                    // --- 4. DOWNLOAD ---
+                    let trendDesc = "N/D"; if (workbook.Sheets["Number of comments (2)"] && workbook.Sheets["Number of comments (2)"]['C16']?.v !== undefined) trendDesc = getTrendDescription(workbook.Sheets["Number of comments (2)"]['C16'].v);
+                    const exportData = { "Totale commenti": formatSmartNumber(totalComments), "Dettaglio Argomenti: Temi trattati Poste Italiane FB: l'argomento con più commenti": topTopicName, "Dettaglio Argomenti: valore in percentuale commenti argomento Temi trattati Poste Italiane FB": topTopicPercent, "Variazione commenti rispetto al mese precedente": trendDesc };
                     const jsonString = JSON.stringify(exportData, null, 2);
-                    const blob = new Blob([jsonString], { type: "application/json" });
-                    const href = URL.createObjectURL(blob);
-                    
-                    const link = document.createElement('a');
-                    link.href = href;
-                    link.download = outputFileName;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    setButtonDone(btn, btnTextEl, "Scaricato!", originalText);
-
-                } catch (err) {
-                    console.error("Errore JSON Export:", err);
-                    setButtonError(btn, btnTextEl, "Errore Dati", originalText);
-                }
+                    if (returnOnly) return jsonString;
+                    const blob = new Blob([jsonString], { type: "application/json" }), link = document.createElement('a'); link.href = URL.createObjectURL(blob); link.download = `ES3_${a}_${m}_${g}_${h}_${min}.json`;
+                    document.body.appendChild(link); link.click(); document.body.removeChild(link);
+                    if(btn) { btn.textContent = "Scaricato!"; setTimeout(() => { btn.textContent = btnTextEl; btn.disabled = false; }, 2000); }
+                } catch (err) { if(btn) { btn.textContent = "Errore Dati"; setTimeout(() => { btn.textContent = btnTextEl; btn.disabled = false; }, 3000); } return null; }
             }
 
-
-            function copyTableToClipboard(tableId, buttonEl) {
-                const table = document.getElementById(tableId);
-                if (!table) return;
-                
-                const btnTextEl = buttonEl.querySelector('.btn-text');
-                const originalText = btnTextEl.textContent;
-                setButtonLoading(buttonEl, btnTextEl, "Copia in corso...");
-
-                let tsv = '';
-                for (const row of table.rows) {
-                    const cells = Array.from(row.cells).map(cell => cell.innerText);
-                    tsv += cells.join('\t') + '\n';
-                }
-
-                const textArea = document.createElement('textarea');
-                textArea.value = tsv;
-                textArea.style.position = 'absolute';
-                textArea.style.left = '-9999px';
-                document.body.appendChild(textArea);
-                
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    setButtonDone(buttonEl, btnTextEl, "Copiato!", originalText);
-                } catch (err) {
-                    console.error("Errore during la copia:", err);
-                    setButtonError(buttonEl, btnTextEl, "Errore", originalText);
-                }
-
-                document.body.removeChild(textArea);
-            }
-
-            function showError(message) {
-                errorText.innerHTML = message;
-                errorMessage.classList.remove('hidden');
-            }
-
-            function hideError() {
-                errorMessage.classList.add('hidden');
-                errorText.innerHTML = "";
-            }
-
-            function showSection(el) {
-                el.classList.add('visible');
-            }
-            
-            function hideSection(el) {
-                el.classList.remove('visible');
-            }
-
-            function setButtonLoading(btnEl, textEl, loadingText) {
-                textEl.textContent = loadingText;
-                btnEl.disabled = true;
-            }
-            
-            function setButtonDone(btnEl, textEl, doneText, originalText) {
-                textEl.textContent = doneText;
-                btnEl.disabled = false;
-                setTimeout(() => {
-                    textEl.textContent = originalText;
-                }, 2000); 
-            }
-            
-            function setButtonError(btnEl, textEl, errorText, originalText) {
-                textEl.textContent = errorText;
-                btnEl.disabled = false;
-                setTimeout(() => {
-                    textEl.textContent = originalText;
-                }, 3000);
-            }
-
+            function showError(message) { errorText.innerHTML = message; errorMessage.classList.remove('hidden'); }
+            function hideError() { errorMessage.classList.add('hidden'); errorText.innerHTML = ""; }
+            function showSection(el) { el.classList.add('visible'); }
+            function hideSection(el) { el.classList.remove('visible'); }
+            function setButtonLoading(btnEl, textEl, loadingText) { textEl.textContent = loadingText; btnEl.disabled = true; }
+            function setButtonDone(btnEl, textEl, doneText, originalText) { textEl.textContent = doneText; btnEl.disabled = false; setTimeout(() => { textEl.textContent = originalText; }, 2000); }
+            function setButtonError(btnEl, textEl, errorText, originalText) { textEl.textContent = errorText; btnEl.disabled = false; setTimeout(() => { textEl.textContent = originalText; }, 3000); }
         });
     </script>
-
 </body>
 </html>
+
+```
